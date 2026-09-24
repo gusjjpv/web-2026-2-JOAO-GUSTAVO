@@ -4,10 +4,13 @@ import { TopBar } from '../../components/layout/TopBar';
 import { BottomNavBar } from '../../components/layout/BottomNavBar';
 import type { Route } from '../../App';
 
+type Modalidade = 'futsal' | 'society';
+type GroupTab = 'membros' | 'ranking' | 'historico';
+type NavTab = 'home' | 'groups' | 'alerts' | 'profile';
+
 interface GroupData {
   nome: string;
-  modalidade: 'futsal' | 'society';
-  limiteVagas: number;
+  modalidades: Modalidade[];
   fotoCapa: string | null;
 }
 
@@ -16,27 +19,34 @@ interface GroupDetailPageProps {
   groupData?: GroupData;
 }
 
-type GroupTab = 'membros' | 'ranking' | 'historico';
-
 /**
  * Tela de Detalhe do Grupo — RachaoApp
  *
- * Seções:
- *  - Header com foto de capa, nome e badge de modalidade
- *  - Botão "Criar Racha" (evento)
- *  - Abas: Membros | Ranking | Histórico
- *    Todas em estado vazio (grupo recém-criado)
+ * - Header com foto de capa + gradiente
+ * - Nome do grupo e badges de modalidade
+ * - Botão "Criar Racha" (TODO: próxima sprint)
+ * - Abas: Membros | Ranking | Histórico (estado vazio)
+ * - BottomNavBar com navegação funcional
  */
 export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
   const [activeTab, setActiveTab] = useState<GroupTab>('membros');
-
-  const modalidadeLabel = groupData?.modalidade === 'society' ? 'Society' : 'Futsal';
 
   const tabs: { id: GroupTab; label: string }[] = [
     { id: 'membros', label: 'Membros' },
     { id: 'ranking', label: 'Ranking' },
     { id: 'historico', label: 'Histórico' },
   ];
+
+  /* Conecta BottomNavBar à navegação entre telas */
+  const handleNavChange = (tab: NavTab) => {
+    if (tab === 'home') navigate('home');
+    // outros tabs ainda sem tela própria — apenas atualiza visual
+  };
+
+  const modalidadeLabels: Record<Modalidade, string> = {
+    futsal: 'Futsal',
+    society: 'Society',
+  };
 
   return (
     <div
@@ -46,29 +56,26 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
       <TopBar />
 
       <main className="flex-1 flex flex-col pb-[55px] overflow-y-auto">
-        {/* ── Capa + Info do grupo ──────────────────────────────── */}
+
+        {/* ── Capa ──────────────────────────────────────────────── */}
         <div className="relative">
-          {/* Foto de capa */}
           <div
             className="w-full"
             style={{
               height: 160,
               backgroundColor: '#000F1E',
-              backgroundImage: groupData?.fotoCapa
-                ? `url(${groupData.fotoCapa})`
-                : undefined,
+              backgroundImage: groupData?.fotoCapa ? `url(${groupData.fotoCapa})` : undefined,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
           >
-            {/* Overlay escuro sobre a capa */}
             <div
               className="w-full h-full"
               style={{ background: 'linear-gradient(to bottom, transparent 30%, rgba(16,42,67,0.95) 100%)' }}
             />
           </div>
 
-          {/* Ícone do grupo (quando não há capa) */}
+          {/* Ícone fallback quando sem capa */}
           {!groupData?.fotoCapa && (
             <div
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full"
@@ -83,7 +90,7 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
             </div>
           )}
 
-          {/* Botão Voltar sobre a capa */}
+          {/* Botão Voltar */}
           <button
             type="button"
             onClick={() => navigate('home')}
@@ -98,37 +105,37 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
           </button>
         </div>
 
-        {/* ── Nome + badge + vagas ──────────────────────────────── */}
+        {/* ── Info + Criar Racha ────────────────────────────────── */}
         <div
-          className="px-5 pt-4 pb-5 flex flex-col gap-2"
+          className="px-5 pt-4 pb-5 flex flex-col gap-3"
           style={{ backgroundColor: '#000F1E', borderBottom: '1px solid #40493D' }}
         >
+          {/* Nome */}
           <h1 className="text-white font-bold text-[22px] leading-tight">
             {groupData?.nome ?? 'Meu Grupo'}
           </h1>
 
-          <div className="flex items-center gap-3">
-            <span
-              className="text-[12px] font-semibold px-3 py-1 rounded-full"
-              style={{ backgroundColor: '#C6FF00', color: '#102A43' }}
-            >
-              {modalidadeLabel}
-            </span>
-            <span className="text-[#9FB7D6] text-[13px]">
-              Até {groupData?.limiteVagas ?? '—'} vagas por racha
-            </span>
+          {/* Badges de modalidade */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {(groupData?.modalidades ?? []).map((mod) => (
+              <span
+                key={mod}
+                className="text-[12px] font-semibold px-3 py-1 rounded-full"
+                style={{ backgroundColor: '#C6FF00', color: '#102A43' }}
+              >
+                {modalidadeLabels[mod]}
+              </span>
+            ))}
           </div>
 
-          {/* Botão principal: Criar Racha */}
-          <div className="mt-2">
-            <Button
-              fullWidth
-              style={{ borderRadius: 8 }}
-              onClick={() => console.log('TODO: criar racha agendado')}
-            >
-              + Criar Racha
-            </Button>
-          </div>
+          {/* CTA: Criar Racha */}
+          <Button
+            fullWidth
+            style={{ borderRadius: 8, marginTop: 4 }}
+            onClick={() => console.log('TODO: criar racha agendado')}
+          >
+            + Criar Racha
+          </Button>
         </div>
 
         {/* ── Abas ─────────────────────────────────────────────── */}
@@ -153,15 +160,15 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
           ))}
         </div>
 
-        {/* ── Conteúdo das abas ────────────────────────────────── */}
-        <div className="flex-1 px-5 pt-5">
+        {/* ── Conteúdo da aba ──────────────────────────────────── */}
+        <div className="flex-1 px-5 pt-5 pb-4">
           {activeTab === 'membros' && <MembrosTab />}
           {activeTab === 'ranking' && <RankingTab />}
           {activeTab === 'historico' && <HistoricoTab />}
         </div>
       </main>
 
-      <BottomNavBar active="groups" />
+      <BottomNavBar active="groups" onTabChange={handleNavChange} />
     </div>
   );
 }
@@ -185,12 +192,7 @@ function MembrosTab() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <span className="text-[#9FB7D6] text-[13px]">0 membros</span>
-        <button
-          type="button"
-          disabled
-          className="text-[#6C7278] text-[12px] font-medium disabled:opacity-50"
-          title="Em breve"
-        >
+        <button type="button" disabled className="text-[#6C7278] text-[12px] font-medium opacity-50" title="Em breve">
           + Convidar
         </button>
       </div>

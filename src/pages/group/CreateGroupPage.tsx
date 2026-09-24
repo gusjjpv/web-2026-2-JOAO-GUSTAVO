@@ -1,6 +1,5 @@
 import { useState, useRef, type FormEvent } from 'react';
 import { InputField } from '../../components/ui/InputField';
-import { RadioGroup } from '../../components/ui/RadioGroup';
 import { Button } from '../../components/ui/Button';
 import type { Route } from '../../App';
 
@@ -8,16 +7,17 @@ interface CreateGroupPageProps {
   navigate: (route: Route, state?: unknown) => void;
 }
 
+type Modalidade = 'futsal' | 'society';
+
 interface GroupForm {
   nome: string;
-  modalidade: 'futsal' | 'society';
-  limiteVagas: string;
-  fotoCapa: string | null; // base64 preview
+  modalidades: Modalidade[]; // multi-seleção
+  fotoCapa: string | null;
 }
 
-type FormErrors = Partial<Record<'nome' | 'modalidade' | 'limiteVagas', string>>;
+type FormErrors = Partial<Record<'nome' | 'modalidades', string>>;
 
-const MODALIDADES = [
+const MODALIDADES: { label: string; value: Modalidade }[] = [
   { label: 'Futsal', value: 'futsal' },
   { label: 'Society', value: 'society' },
 ];
@@ -28,50 +28,56 @@ const MODALIDADES = [
  * Campos:
  *  - Foto de capa (opcional)
  *  - Nome do grupo (obrigatório, 3–50 chars)
- *  - Modalidade (Futsal / Society)
- *  - Limite padrão de vagas (≥ 2)
+ *  - Modalidades (Futsal e/ou Society — multi-seleção)
  */
 export function CreateGroupPage({ navigate }: CreateGroupPageProps) {
   const [form, setForm] = useState<GroupForm>({
     nome: '',
-    modalidade: 'futsal',
-    limiteVagas: '',
+    modalidades: [],
     fotoCapa: null,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /* ── Foto de capa ────────────────────────────────────────────────────── */
   const handleCoverClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = (ev) =>
       setForm((prev) => ({ ...prev, fotoCapa: ev.target?.result as string }));
-    };
     reader.readAsDataURL(file);
   };
 
-  const handleChange =
-    (field: 'nome' | 'limiteVagas') =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    };
+  /* ── Modalidade (toggle multi-select) ───────────────────────────────── */
+  const toggleModalidade = (value: Modalidade) => {
+    setForm((prev) => {
+      const already = prev.modalidades.includes(value);
+      return {
+        ...prev,
+        modalidades: already
+          ? prev.modalidades.filter((m) => m !== value)
+          : [...prev.modalidades, value],
+      };
+    });
+    setErrors((prev) => ({ ...prev, modalidades: undefined }));
+  };
 
+  /* ── Validação ───────────────────────────────────────────────────────── */
   const validate = (): FormErrors => {
     const e: FormErrors = {};
     if (!form.nome.trim() || form.nome.trim().length < 3)
       e.nome = 'Nome deve ter pelo menos 3 caracteres';
     else if (form.nome.trim().length > 50)
       e.nome = 'Nome deve ter no máximo 50 caracteres';
-    const vagas = Number(form.limiteVagas);
-    if (!form.limiteVagas || isNaN(vagas) || vagas < 2)
-      e.limiteVagas = 'O limite mínimo é de 2 vagas';
+    if (form.modalidades.length === 0)
+      e.modalidades = 'Selecione pelo menos uma modalidade';
     return e;
   };
 
+  /* ── Submit ──────────────────────────────────────────────────────────── */
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const errs = validate();
@@ -80,8 +86,7 @@ export function CreateGroupPage({ navigate }: CreateGroupPageProps) {
     // TODO: POST /grupos (API)
     const groupData = {
       nome: form.nome.trim(),
-      modalidade: form.modalidade,
-      limiteVagas: Number(form.limiteVagas),
+      modalidades: form.modalidades,
       fotoCapa: form.fotoCapa,
     };
 
@@ -96,11 +101,7 @@ export function CreateGroupPage({ navigate }: CreateGroupPageProps) {
       {/* Header */}
       <header
         className="w-full flex items-center px-4"
-        style={{
-          backgroundColor: '#000F1E',
-          borderBottom: '1px solid #40493D',
-          height: 56,
-        }}
+        style={{ backgroundColor: '#000F1E', borderBottom: '1px solid #40493D', height: 56 }}
       >
         <button
           type="button"
@@ -157,13 +158,7 @@ export function CreateGroupPage({ navigate }: CreateGroupPageProps) {
               )}
             </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
 
           {/* Nome do grupo */}
@@ -172,31 +167,46 @@ export function CreateGroupPage({ navigate }: CreateGroupPageProps) {
             type="text"
             placeholder="Ex: Racha da Sexta"
             value={form.nome}
-            onChange={handleChange('nome')}
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, nome: e.target.value }));
+              setErrors((prev) => ({ ...prev, nome: undefined }));
+            }}
             error={errors.nome}
             maxLength={50}
           />
 
-          {/* Modalidade */}
-          <RadioGroup
-            label="Modalidade"
-            options={MODALIDADES}
-            value={form.modalidade}
-            onChange={(val) =>
-              setForm((prev) => ({ ...prev, modalidade: val as GroupForm['modalidade'] }))
-            }
-            error={errors.modalidade}
-          />
+          {/* Modalidades — multi-seleção */}
+          <div className="flex flex-col gap-[2px]">
+            <span className="text-[#6C7278] font-medium text-[12px] leading-[1.6em] tracking-[-0.02em] font-['Plus_Jakarta_Sans']">
+              Modalidade
+            </span>
 
-          {/* Limite de vagas */}
-          <InputField
-            label="Limite padrão de vagas"
-            type="number"
-            placeholder="Ex: 20"
-            value={form.limiteVagas}
-            onChange={handleChange('limiteVagas')}
-            error={errors.limiteVagas}
-          />
+            <div className="flex gap-3">
+              {MODALIDADES.map((mod) => {
+                const isActive = form.modalidades.includes(mod.value);
+                return (
+                  <button
+                    key={mod.value}
+                    type="button"
+                    onClick={() => toggleModalidade(mod.value)}
+                    className="flex-1 py-[13.5px] px-4 rounded-[10px] border text-[14px] font-medium leading-[1.4em] transition-colors"
+                    style={{
+                      backgroundColor: isActive ? '#C6FF00' : '#FFFFFF',
+                      color: isActive ? '#102A43' : '#1A1C1E',
+                      borderColor: isActive ? '#C6FF00' : '#EDF1F3',
+                      boxShadow: isActive ? 'none' : '0px 1px 2px 0px rgba(228, 229, 231, 0.24)',
+                    }}
+                  >
+                    {mod.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {errors.modalidades && (
+              <span className="text-red-500 text-[12px] font-medium mt-1">{errors.modalidades}</span>
+            )}
+          </div>
 
           <div className="flex justify-center mt-2">
             <Button type="submit" style={{ width: 175, borderRadius: 8 }}>
