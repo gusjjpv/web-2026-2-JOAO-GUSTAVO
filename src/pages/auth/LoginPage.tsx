@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Button } from '../../components/ui/Button';
 import { InputField } from '../../components/ui/InputField';
-import logoImg from '../../assets/logo.png';
+import logoImg from '../../assets/Logo.svg';
 
 /**
  * Página de Login — RachaoApp
@@ -39,7 +39,7 @@ export function LoginPage() {
         <img
           src={logoImg}
           alt="RachaoApp mascote"
-          className="w-[211px] h-[211px] object-cover rounded-full"
+          className="w-[200px] h-[200px] object-cover rounded-full"
         />
 
         {/* Nome do app */}
