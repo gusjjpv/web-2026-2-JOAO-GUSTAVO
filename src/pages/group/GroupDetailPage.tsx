@@ -1,12 +1,14 @@
+import { useState } from 'react';
+import { Button } from '../../components/ui/Button';
 import { TopBar } from '../../components/layout/TopBar';
 import { BottomNavBar } from '../../components/layout/BottomNavBar';
-import { Button } from '../../components/ui/Button';
 import type { Route } from '../../App';
 
 interface GroupData {
   nome: string;
   modalidade: 'futsal' | 'society';
   limiteVagas: number;
+  fotoCapa: string | null;
 }
 
 interface GroupDetailPageProps {
@@ -14,18 +16,27 @@ interface GroupDetailPageProps {
   groupData?: GroupData;
 }
 
+type GroupTab = 'membros' | 'ranking' | 'historico';
+
 /**
  * Tela de Detalhe do Grupo — RachaoApp
- * Baseada no Figma 33-1092 (tela com membros e racha criado).
- * Adaptada para o estado vazio (logo após a criação do grupo):
- *  - Sem membros
- *  - Sem racha agendado
  *
- * Quando o Figma estiver acessível, ajustar o layout visual.
+ * Seções:
+ *  - Header com foto de capa, nome e badge de modalidade
+ *  - Botão "Criar Racha" (evento)
+ *  - Abas: Membros | Ranking | Histórico
+ *    Todas em estado vazio (grupo recém-criado)
  */
-export function GroupDetailPage({ navigate: _navigate, groupData }: GroupDetailPageProps) {
-  const modalidadeLabel =
-    groupData?.modalidade === 'society' ? 'Society' : 'Futsal';
+export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
+  const [activeTab, setActiveTab] = useState<GroupTab>('membros');
+
+  const modalidadeLabel = groupData?.modalidade === 'society' ? 'Society' : 'Futsal';
+
+  const tabs: { id: GroupTab; label: string }[] = [
+    { id: 'membros', label: 'Membros' },
+    { id: 'ranking', label: 'Ranking' },
+    { id: 'historico', label: 'Histórico' },
+  ];
 
   return (
     <div
@@ -34,31 +45,68 @@ export function GroupDetailPage({ navigate: _navigate, groupData }: GroupDetailP
     >
       <TopBar />
 
-      <main className="flex-1 flex flex-col pb-[55px]">
-        {/* Banner / cabeçalho do grupo */}
-        <div
-          className="w-full flex flex-col items-center justify-center py-8 gap-2"
-          style={{ backgroundColor: '#000F1E', borderBottom: '1px solid #40493D' }}
-        >
-          {/* Ícone do grupo */}
+      <main className="flex-1 flex flex-col pb-[55px] overflow-y-auto">
+        {/* ── Capa + Info do grupo ──────────────────────────────── */}
+        <div className="relative">
+          {/* Foto de capa */}
           <div
-            className="flex items-center justify-center rounded-full"
-            style={{ width: 72, height: 72, backgroundColor: '#1A3A5C' }}
+            className="w-full"
+            style={{
+              height: 160,
+              backgroundColor: '#000F1E',
+              backgroundImage: groupData?.fotoCapa
+                ? `url(${groupData.fotoCapa})`
+                : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
           >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9FB7D6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
+            {/* Overlay escuro sobre a capa */}
+            <div
+              className="w-full h-full"
+              style={{ background: 'linear-gradient(to bottom, transparent 30%, rgba(16,42,67,0.95) 100%)' }}
+            />
           </div>
 
-          {/* Nome do grupo */}
-          <h1 className="text-white font-bold text-[20px] leading-tight text-center px-4">
+          {/* Ícone do grupo (quando não há capa) */}
+          {!groupData?.fotoCapa && (
+            <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center rounded-full"
+              style={{ width: 72, height: 72, backgroundColor: '#1A3A5C' }}
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9FB7D6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+          )}
+
+          {/* Botão Voltar sobre a capa */}
+          <button
+            type="button"
+            onClick={() => navigate('home')}
+            className="absolute top-3 left-4 flex items-center gap-1 text-white text-[13px] font-medium hover:opacity-80 transition-opacity"
+            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}
+            aria-label="Voltar"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Voltar
+          </button>
+        </div>
+
+        {/* ── Nome + badge + vagas ──────────────────────────────── */}
+        <div
+          className="px-5 pt-4 pb-5 flex flex-col gap-2"
+          style={{ backgroundColor: '#000F1E', borderBottom: '1px solid #40493D' }}
+        >
+          <h1 className="text-white font-bold text-[22px] leading-tight">
             {groupData?.nome ?? 'Meu Grupo'}
           </h1>
 
-          {/* Modalidade + limite */}
           <div className="flex items-center gap-3">
             <span
               className="text-[12px] font-semibold px-3 py-1 rounded-full"
@@ -66,83 +114,124 @@ export function GroupDetailPage({ navigate: _navigate, groupData }: GroupDetailP
             >
               {modalidadeLabel}
             </span>
-            <span className="text-[#9FB7D6] text-[12px]">
-              Até {groupData?.limiteVagas ?? '—'} vagas
+            <span className="text-[#9FB7D6] text-[13px]">
+              Até {groupData?.limiteVagas ?? '—'} vagas por racha
             </span>
+          </div>
+
+          {/* Botão principal: Criar Racha */}
+          <div className="mt-2">
+            <Button
+              fullWidth
+              style={{ borderRadius: 8 }}
+              onClick={() => console.log('TODO: criar racha agendado')}
+            >
+              + Criar Racha
+            </Button>
           </div>
         </div>
 
-        {/* Seção: Próximo Racha Agendado */}
-        <section className="px-5 pt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-white font-semibold text-[15px]">
-              Próximo Racha
-            </h2>
-          </div>
-
-          {/* Estado vazio — sem racha agendado */}
-          <div
-            className="w-full flex flex-col items-center justify-center gap-3 rounded-[12px] py-8 px-4"
-            style={{ backgroundColor: '#000F1E', border: '1px dashed #40493D' }}
-          >
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#40493D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <p className="text-[#6C7278] text-[13px] text-center">
-              Nenhum racha agendado ainda
-            </p>
-            {/* Desabilitado — próxima sprint */}
-            <Button
-              disabled
-              style={{ width: 196, borderRadius: 8, opacity: 0.5 }}
-              title="Em breve"
-            >
-              + Criar Racha Agendado
-            </Button>
-          </div>
-        </section>
-
-        {/* Seção: Membros */}
-        <section className="px-5 pt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-white font-semibold text-[15px]">
-              Membros
-            </h2>
-            {/* Desabilitado — próxima sprint */}
+        {/* ── Abas ─────────────────────────────────────────────── */}
+        <div
+          className="flex border-b"
+          style={{ borderColor: '#40493D', backgroundColor: '#000F1E' }}
+        >
+          {tabs.map((tab) => (
             <button
+              key={tab.id}
               type="button"
-              disabled
-              className="text-[#6C7278] text-[12px] font-medium"
-              title="Em breve"
+              onClick={() => setActiveTab(tab.id)}
+              className="flex-1 py-3 text-[13px] font-semibold transition-colors"
+              style={{
+                color: activeTab === tab.id ? '#C6FF00' : '#6C7278',
+                borderBottom: activeTab === tab.id ? '2px solid #C6FF00' : '2px solid transparent',
+                backgroundColor: 'transparent',
+              }}
             >
-              + Convidar
+              {tab.label}
             </button>
-          </div>
+          ))}
+        </div>
 
-          {/* Estado vazio — sem membros */}
-          <div
-            className="w-full flex flex-col items-center justify-center gap-2 rounded-[12px] py-8 px-4"
-            style={{ backgroundColor: '#000F1E', border: '1px dashed #40493D' }}
-          >
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#40493D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <line x1="23" y1="11" x2="17" y2="11" />
-              <line x1="20" y1="8" x2="20" y2="14" />
-            </svg>
-            <p className="text-[#6C7278] text-[13px] text-center">
-              Nenhum membro ainda.{' '}
-              <span className="text-[#9FB7D6]">Convide jogadores</span>{' '}
-              para começar.
-            </p>
-          </div>
-        </section>
+        {/* ── Conteúdo das abas ────────────────────────────────── */}
+        <div className="flex-1 px-5 pt-5">
+          {activeTab === 'membros' && <MembrosTab />}
+          {activeTab === 'ranking' && <RankingTab />}
+          {activeTab === 'historico' && <HistoricoTab />}
+        </div>
       </main>
 
       <BottomNavBar active="groups" />
     </div>
+  );
+}
+
+/* ── Componentes internos das abas ───────────────────────────────────────── */
+
+function EmptyState({ icon, message }: { icon: React.ReactNode; message: string }) {
+  return (
+    <div
+      className="w-full flex flex-col items-center justify-center gap-3 rounded-[12px] py-10 px-4"
+      style={{ backgroundColor: '#000F1E', border: '1px dashed #40493D' }}
+    >
+      <div style={{ color: '#40493D' }}>{icon}</div>
+      <p className="text-[#6C7278] text-[13px] text-center">{message}</p>
+    </div>
+  );
+}
+
+function MembrosTab() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[#9FB7D6] text-[13px]">0 membros</span>
+        <button
+          type="button"
+          disabled
+          className="text-[#6C7278] text-[12px] font-medium disabled:opacity-50"
+          title="Em breve"
+        >
+          + Convidar
+        </button>
+      </div>
+      <EmptyState
+        icon={
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <line x1="23" y1="11" x2="17" y2="11" />
+            <line x1="20" y1="8" x2="20" y2="14" />
+          </svg>
+        }
+        message="Nenhum membro ainda. Convide jogadores para começar!"
+      />
+    </div>
+  );
+}
+
+function RankingTab() {
+  return (
+    <EmptyState
+      icon={
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+      }
+      message="O ranking será gerado após o primeiro racha realizado."
+    />
+  );
+}
+
+function HistoricoTab() {
+  return (
+    <EmptyState
+      icon={
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      }
+      message="Nenhum racha realizado ainda. O histórico aparecerá aqui."
+    />
   );
 }
