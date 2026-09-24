@@ -40,7 +40,8 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
   /* Conecta BottomNavBar à navegação entre telas */
   const handleNavChange = (tab: NavTab) => {
     if (tab === 'home') navigate('home');
-    // outros tabs ainda sem tela própria — apenas atualiza visual
+    if (tab === 'profile') navigate('perfil');
+    // outros tabs ainda sem tela própria
   };
 
   const modalidadeLabels: Record<Modalidade, string> = {

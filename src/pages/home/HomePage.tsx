@@ -17,6 +17,11 @@ interface HomePageProps {
 export function HomePage({ navigate }: HomePageProps) {
   const [activeTab, setActiveTab] = useState<NavTab>('home');
 
+  const handleNavChange = (tab: NavTab) => {
+    setActiveTab(tab);
+    if (tab === 'profile') navigate('perfil');
+  };
+
   return (
     <div
       className="min-h-screen w-full flex flex-col"
@@ -43,7 +48,7 @@ export function HomePage({ navigate }: HomePageProps) {
         </Button>
       </main>
 
-      <BottomNavBar active={activeTab} onTabChange={setActiveTab} />
+      <BottomNavBar active={activeTab} onTabChange={handleNavChange} />
     </div>
   );
 }
