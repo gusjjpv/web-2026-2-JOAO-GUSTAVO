@@ -2,19 +2,19 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { TopBar } from '../../components/layout/TopBar';
 import { BottomNavBar } from '../../components/layout/BottomNavBar';
+import type { Route } from '../../App';
 
 type NavTab = 'home' | 'groups' | 'alerts' | 'profile';
+
+interface HomePageProps {
+  navigate: (route: Route) => void;
+}
 
 /**
  * Tela inicial vazia — RachaoApp
  * Figma node: 44-312
- *
- * Estrutura:
- * - TopBar (logo + sino)
- * - Área central com dois botões de ação principais
- * - BottomNavBar fixo (Home | Groups | Alerts | Você)
  */
-export function HomePage() {
+export function HomePage({ navigate: _navigate }: HomePageProps) {
   const [activeTab, setActiveTab] = useState<NavTab>('home');
 
   return (
@@ -28,7 +28,7 @@ export function HomePage() {
       {/* Conteúdo central */}
       <main
         className="flex-1 flex flex-col items-center justify-center gap-[18px]"
-        style={{ paddingBottom: 55 }} // espaço para BottomNavBar fixo
+        style={{ paddingBottom: 55 }}
       >
         <Button
           style={{ width: 196, borderRadius: 8 }}

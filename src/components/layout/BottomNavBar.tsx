@@ -72,7 +72,7 @@ export function BottomNavBar({ active = 'home', onTabChange }: BottomNavBarProps
             type="button"
             onClick={() => onTabChange?.(tab.id)}
             className={`flex flex-col items-center justify-center gap-0.5 px-4 py-1 rounded-[12px] transition-colors ${
-              isActive ? '' : 'bg-[#314863]'
+              isActive ? 'bg-[#314863]' : ''
             }`}
             style={{ color: isActive ? '#9FB7D6' : '#BFCABA' }}
             aria-label={tab.label}

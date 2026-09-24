@@ -1,14 +1,18 @@
 import { useRef, type FormEvent } from 'react';
 import { Button } from '../../components/ui/Button';
+import type { Route } from '../../App';
+
+interface UploadPhotoPageProps {
+  navigate: (route: Route) => void;
+}
 
 /**
  * Página de Upload de Foto — RachaoApp
  * Figma node: 44-256
  *
- * Exibe um avatar circular (placeholder cinza), título "Envie sua foto"
- * e botão "Continuar →".
+ * Avatar circular clicável, título "Envie sua foto" e botão "Continuar →" → navega para home
  */
-export function UploadPhotoPage() {
+export function UploadPhotoPage({ navigate }: UploadPhotoPageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarClick = () => inputRef.current?.click();
@@ -22,8 +26,7 @@ export function UploadPhotoPage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    // TODO: avançar para próxima etapa
-    console.log('Foto enviada');
+    navigate('home');
   };
 
   return (
@@ -31,7 +34,6 @@ export function UploadPhotoPage() {
       className="min-h-screen w-full flex flex-col items-center justify-start"
       style={{ backgroundColor: '#102A43' }}
     >
-      {/* Área do avatar — ocupa parte superior */}
       <div
         className="w-full flex flex-col items-center justify-center"
         style={{ paddingTop: 344 }}
@@ -41,14 +43,9 @@ export function UploadPhotoPage() {
           type="button"
           onClick={handleAvatarClick}
           className="flex items-center justify-center rounded-full overflow-hidden hover:opacity-80 transition-opacity"
-          style={{
-            width: 175,
-            height: 168,
-            backgroundColor: '#D9D9D9',
-          }}
+          style={{ width: 175, height: 168, backgroundColor: '#D9D9D9' }}
           aria-label="Clique para selecionar foto"
         >
-          {/* Ícone de câmera */}
           <svg
             width="48"
             height="48"
@@ -64,7 +61,6 @@ export function UploadPhotoPage() {
           </svg>
         </button>
 
-        {/* Input file oculto */}
         <input
           ref={inputRef}
           type="file"
@@ -73,7 +69,6 @@ export function UploadPhotoPage() {
           onChange={handleFileChange}
         />
 
-        {/* Título */}
         <p
           className="mt-4 text-white text-center"
           style={{
@@ -87,12 +82,8 @@ export function UploadPhotoPage() {
           Envie sua foto
         </p>
 
-        {/* Botão */}
         <form onSubmit={handleSubmit} className="mt-6">
-          <Button
-            type="submit"
-            style={{ width: 143, borderRadius: 8 }}
-          >
+          <Button type="submit" style={{ width: 143, borderRadius: 8 }}>
             Continuar →
           </Button>
         </form>

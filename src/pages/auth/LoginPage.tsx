@@ -2,27 +2,24 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '../../components/ui/Button';
 import { InputField } from '../../components/ui/InputField';
 import logoImg from '../../assets/Logo.svg';
+import type { Route } from '../../App';
+
+interface LoginPageProps {
+  navigate: (route: Route) => void;
+}
 
 /**
  * Página de Login — RachaoApp
- * Fiel ao design do Figma: node-id 18-198
- *
- * Estrutura:
- *  - Fundo escuro (#102A43)
- *  - Logo centralizado (imagem + "RachaoApp")
- *  - Campo de Email
- *  - Campo de Senha (com toggle)
- *  - Botão "Entrar"
- *  - Link "Não tem uma conta? Criar"
+ * Figma node: 18-198
  */
-export function LoginPage() {
+export function LoginPage({ navigate }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     // TODO: integrar com o serviço de autenticação
-    console.log('Login:', { email, password });
+    navigate('home');
   };
 
   return (
@@ -35,14 +32,11 @@ export function LoginPage() {
         className="flex flex-col items-center"
         style={{ width: 293, marginBottom: 88 }}
       >
-        {/* Imagem do mascote */}
         <img
           src={logoImg}
           alt="RachaoApp mascote"
-          className="w-[200px] h-[200px] object-cover rounded-full"
+          className="w-[211px] h-[211px] object-contain"
         />
-
-        {/* Nome do app */}
         <span
           style={{
             fontFamily: "'Unbounded', sans-serif",
@@ -64,7 +58,6 @@ export function LoginPage() {
         style={{ maxWidth: 327 }}
         noValidate
       >
-        {/* Campo Email */}
         <InputField
           label="Email"
           type="email"
@@ -74,7 +67,6 @@ export function LoginPage() {
           autoComplete="email"
         />
 
-        {/* Campo Senha */}
         <InputField
           label="Senha"
           type="password"
@@ -85,7 +77,6 @@ export function LoginPage() {
           className="mt-[47px]"
         />
 
-        {/* Botão Entrar */}
         <Button
           type="submit"
           className="mt-[67px] mx-auto"
@@ -101,12 +92,13 @@ export function LoginPage() {
         style={{ width: 231 }}
       >
         Não tem uma conta?{' '}
-        <a
-          href="/register"
+        <button
+          type="button"
+          onClick={() => navigate('register')}
           className="underline text-[#0978F5] hover:opacity-80 transition-opacity"
         >
           Criar
-        </a>
+        </button>
       </p>
     </div>
   );

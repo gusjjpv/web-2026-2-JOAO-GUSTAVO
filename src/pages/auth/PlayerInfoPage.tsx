@@ -1,7 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Dropdown } from '../../components/ui/Dropdown';
-import logoImg from '../../assets/logo.png';
+import logoImg from '../../assets/Logo.svg';
+import type { Route } from '../../App';
+
+interface PlayerInfoPageProps {
+  navigate: (route: Route) => void;
+}
 
 const POSICOES = [
   { label: 'Fixo', value: 'fixo' },
@@ -25,10 +30,10 @@ const MODALIDADES = [
  * Página de Cadastro — Informações do jogador — RachaoApp
  * Figma node: 20-562
  *
- * Dropdowns: posição principal, posição secundária, pé dominante, modalidade preferida
- * Botão: "Continuar →"
+ * Dropdowns: posição principal, secundária, pé dominante, modalidade preferida
+ * Botão: "Continuar →" → navega para upload-photo
  */
-export function PlayerInfoPage() {
+export function PlayerInfoPage({ navigate }: PlayerInfoPageProps) {
   const [form, setForm] = useState({
     posicaoPrincipal: '',
     posicaoSecundaria: '',
@@ -42,7 +47,7 @@ export function PlayerInfoPage() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     // TODO: integrar com serviço de cadastro
-    console.log('Informações do jogador:', form);
+    navigate('upload-photo');
   };
 
   return (
@@ -55,7 +60,7 @@ export function PlayerInfoPage() {
         <img
           src={logoImg}
           alt="RachaoApp mascote"
-          className="w-[211px] h-[211px] object-cover rounded-full"
+          className="w-[211px] h-[211px] object-contain"
         />
         <span
           style={{
@@ -106,12 +111,8 @@ export function PlayerInfoPage() {
           onChange={handleChange('modalidade')}
         />
 
-        {/* Botão Continuar */}
         <div className="flex justify-center mt-6">
-          <Button
-            type="submit"
-            style={{ width: 143, borderRadius: 8 }}
-          >
+          <Button type="submit" style={{ width: 143, borderRadius: 8 }}>
             Continuar →
           </Button>
         </div>

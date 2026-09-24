@@ -1,16 +1,21 @@
 import { useState, type FormEvent } from 'react';
 import { Button } from '../../components/ui/Button';
 import { InputField } from '../../components/ui/InputField';
-import logoImg from '../../assets/logo.png';
+import logoImg from '../../assets/Logo.svg';
+import type { Route } from '../../App';
+
+interface RegisterPageProps {
+  navigate: (route: Route) => void;
+}
 
 /**
  * Página de Cadastro (Cria conta) — RachaoApp
  * Figma node: 20-445
  *
  * Campos: Nome, Email, Telefone, Senha
- * Botão: "Continuar →"
+ * Botão: "Continuar →" → navega para player-info
  */
-export function RegisterPage() {
+export function RegisterPage({ navigate }: RegisterPageProps) {
   const [form, setForm] = useState({
     nome: '',
     email: '',
@@ -25,7 +30,7 @@ export function RegisterPage() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     // TODO: integrar com serviço de cadastro
-    console.log('Cadastro:', form);
+    navigate('player-info');
   };
 
   return (
@@ -38,7 +43,7 @@ export function RegisterPage() {
         <img
           src={logoImg}
           alt="RachaoApp mascote"
-          className="w-[211px] h-[211px] object-cover rounded-full"
+          className="w-[211px] h-[211px] object-contain"
         />
         <span
           style={{
@@ -97,12 +102,8 @@ export function RegisterPage() {
           autoComplete="new-password"
         />
 
-        {/* Botão Continuar */}
         <div className="flex justify-center mt-4">
-          <Button
-            type="submit"
-            style={{ width: 143, borderRadius: 8 }}
-          >
+          <Button type="submit" style={{ width: 143, borderRadius: 8 }}>
             Continuar →
           </Button>
         </div>
