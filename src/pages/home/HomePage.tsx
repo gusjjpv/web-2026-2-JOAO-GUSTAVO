@@ -7,14 +7,14 @@ import type { Route } from '../../App';
 type NavTab = 'home' | 'groups' | 'alerts' | 'profile';
 
 interface HomePageProps {
-  navigate: (route: Route) => void;
+  navigate: (route: Route, state?: unknown) => void;
 }
 
 /**
  * Tela inicial vazia — RachaoApp
  * Figma node: 44-312
  */
-export function HomePage({ navigate: _navigate }: HomePageProps) {
+export function HomePage({ navigate }: HomePageProps) {
   const [activeTab, setActiveTab] = useState<NavTab>('home');
 
   return (
@@ -22,10 +22,8 @@ export function HomePage({ navigate: _navigate }: HomePageProps) {
       className="min-h-screen w-full flex flex-col"
       style={{ backgroundColor: '#102A43' }}
     >
-      {/* Barra superior */}
       <TopBar />
 
-      {/* Conteúdo central */}
       <main
         className="flex-1 flex flex-col items-center justify-center gap-[18px]"
         style={{ paddingBottom: 55 }}
@@ -39,13 +37,12 @@ export function HomePage({ navigate: _navigate }: HomePageProps) {
 
         <Button
           style={{ width: 194, borderRadius: 4 }}
-          onClick={() => console.log('Criar um Racha')}
+          onClick={() => navigate('criar-grupo')}
         >
           Criar um Racha
         </Button>
       </main>
 
-      {/* Barra de navegação inferior */}
       <BottomNavBar active={activeTab} onTabChange={setActiveTab} />
     </div>
   );

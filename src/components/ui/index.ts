@@ -5,3 +5,4 @@
 export { Button } from './Button';
 export { InputField } from './InputField';
 export { Dropdown } from './Dropdown';
+export { RadioGroup } from './RadioGroup';
