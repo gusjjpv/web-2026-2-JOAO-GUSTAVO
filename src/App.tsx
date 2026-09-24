@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import './App.css'
+import { LoginPage } from './pages/auth/LoginPage';
 
 function App() {
+  return <LoginPage />;
 }
 
-export default App
+export default App;
