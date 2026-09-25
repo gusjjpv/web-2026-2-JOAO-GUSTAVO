@@ -3,14 +3,21 @@ type NavTab = 'home' | 'groups' | 'alerts' | 'profile';
 interface BottomNavBarProps {
   active?: NavTab;
   onTabChange?: (tab: NavTab) => void;
+  /** URL ou base64 da foto do usuário — exibida na aba "Você" quando ativa */
+  userPhoto?: string | null;
 }
 
 /**
  * BottomNavBar component — barra de navegação inferior reutilizável.
- * Baseado no componente "BottomNavBar" do Figma (node 33:1091).
  * Abas: Home | Groups | Alerts | Você
+ *
+ * Quando ativa, a aba "Você" exibe o avatar do usuário no lugar do ícone genérico.
  */
-export function BottomNavBar({ active = 'home', onTabChange }: BottomNavBarProps) {
+export function BottomNavBar({
+  active = 'home',
+  onTabChange,
+  userPhoto,
+}: BottomNavBarProps) {
   const tabs: { id: NavTab; label: string; icon: React.ReactNode }[] = [
     {
       id: 'home',
@@ -42,11 +49,7 @@ export function BottomNavBar({ active = 'home', onTabChange }: BottomNavBarProps
     {
       id: 'profile',
       label: 'Você',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-        </svg>
-      ),
+      icon: null, // tratado separadamente abaixo
     },
   ];
 
@@ -66,6 +69,8 @@ export function BottomNavBar({ active = 'home', onTabChange }: BottomNavBarProps
     >
       {tabs.map((tab) => {
         const isActive = active === tab.id;
+        const isProfile = tab.id === 'profile';
+
         return (
           <button
             key={tab.id}
@@ -77,7 +82,27 @@ export function BottomNavBar({ active = 'home', onTabChange }: BottomNavBarProps
             style={{ color: isActive ? '#9FB7D6' : '#BFCABA' }}
             aria-label={tab.label}
           >
-            {tab.icon}
+            {/* Aba Você: avatar ou ícone genérico */}
+            {isProfile ? (
+              <div
+                className="rounded-full overflow-hidden flex items-center justify-center flex-shrink-0"
+                style={{ width: 20, height: 20, backgroundColor: '#1A3A5C' }}
+              >
+                {userPhoto ? (
+                  <img
+                    src={userPhoto}
+                    alt="Você"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                  </svg>
+                )}
+              </div>
+            ) : (
+              tab.icon
+            )}
             <span className="text-[12px] font-medium leading-4">{tab.label}</span>
           </button>
         );

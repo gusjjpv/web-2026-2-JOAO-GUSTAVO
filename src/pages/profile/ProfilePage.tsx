@@ -15,21 +15,16 @@ interface ProfilePageProps {
   navigate: (route: Route, state?: unknown) => void;
 }
 
-const MODALIDADE_LABEL: Record<string, string> = {
-  futsal: 'Futsal',
-  society: 'Society',
-};
-
 /**
  * Tela de Perfil do Usuário — RachaoApp
  * Figma node: 33-1304
  *
- * Layout sem containers — elementos direto no fundo #102A43:
- *  - Banner de fundo + avatar centralizado
- *  - Nome, posições e pé dominante soltos na tela
- *  - Linha separadora
- *  - Bloco de estatísticas (rating + grade de stats)
- *  - Lista de grupos
+ * Estrutura (de cima para baixo):
+ *  1. TopBar (cabeçalho #000F1E)
+ *  2. Área de identificação: foto à esquerda | nome + posição + pé à direita — fundo #001D32
+ *  3. Card "Meus status": rating em box com borda verde + grade 3×2 de stats
+ *  4. Seção "Seus grupos" com título + "View All" + cards de grupos
+ *  5. BottomNavBar com avatar na aba Você
  */
 export function ProfilePage({ navigate }: ProfilePageProps) {
   const [activeNav, setActiveNav] = useState<NavTab>('profile');
@@ -52,27 +47,16 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
 
       <main className="flex-1 overflow-y-auto pb-[55px]">
 
-        {/* ── Banner + Avatar ──────────────────────────────────── */}
-        <div className="relative">
-          {/* Banner de cor */}
-          <div
-            className="w-full"
-            style={{
-              height: 120,
-              background: 'linear-gradient(to bottom, #009951 0%, #009951 40%, #102A43 100%)',
-            }}
-          />
-
-          {/* Avatar centralizado sobre o banner */}
-          <div className="flex justify-center" style={{ marginTop: -44 }}>
+        {/* ── 1. Área de identificação do jogador ──────────────── */}
+        <div
+          className="w-full px-5 py-5"
+          style={{ backgroundColor: '#001D32' }}
+        >
+          <div className="flex items-center gap-4">
+            {/* Foto circular — sem borda */}
             <div
-              className="flex items-center justify-center rounded-full border-4 overflow-hidden"
-              style={{
-                width: 88,
-                height: 88,
-                backgroundColor: '#1A3A5C',
-                borderColor: '#102A43',
-              }}
+              className="flex-shrink-0 rounded-full overflow-hidden flex items-center justify-center"
+              style={{ width: 88, height: 88, backgroundColor: '#1A3A5C' }}
             >
               {profile.fotoPerfil ? (
                 <img
@@ -87,175 +71,217 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
                 </svg>
               )}
             </div>
+
+            {/* Nome + posição + pé */}
+            <div className="flex flex-col gap-1">
+              <h1 className="text-white font-semibold text-[20px] leading-tight">
+                {profile.nome}
+              </h1>
+              {/* Posição e pé dominante na mesma linha */}
+              <div className="flex items-center gap-6">
+                <span className="text-[#9FB7D6] text-[14px]">
+                  {profile.posicaoPrincipal}
+                </span>
+                <span className="text-[#9FB7D6] text-[14px]">
+                  {profile.peDominante}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ── Identidade ──────────────────────────────────────── */}
-        <div className="flex flex-col items-center px-6 mt-3 gap-1">
-          {/* Nome */}
-          <h1 className="text-white font-bold text-[22px] leading-tight text-center">
-            {profile.nome}
-          </h1>
-
-          {/* Posições */}
-          <p className="text-[#9FB7D6] text-[13px] text-center">
-            {profile.posicaoPrincipal}
-            {profile.posicaoSecundaria ? ` · ${profile.posicaoSecundaria}` : ''}
-          </p>
-
-          {/* Pé dominante */}
-          <p className="text-[#6C7278] text-[12px] text-center">
-            Pé {profile.peDominante}
-          </p>
-
-          {/* Botão editar */}
-          <button
-            type="button"
-            className="mt-3 text-[12px] font-semibold px-5 py-1.5 rounded-full border transition-colors hover:opacity-80"
-            style={{ color: '#C6FF00', borderColor: '#C6FF00' }}
-            onClick={() => console.log('TODO: editar perfil')}
-          >
-            Editar perfil
-          </button>
-        </div>
-
-        {/* ── Separador ───────────────────────────────────────── */}
-        <div
-          className="mx-6 my-5"
-          style={{ height: 1, backgroundColor: '#40493D' }}
-        />
-
-        {/* ── Estatísticas ────────────────────────────────────── */}
-        <div className="px-6">
+        {/* ── 2. Card "Meus status" ────────────────────────────── */}
+        <div className="px-4 pt-4">
           <div
-            className="w-full rounded-[16px] p-5"
+            className="w-full rounded-[8px] p-4"
             style={{ backgroundColor: '#000F1E', border: '1px solid #40493D' }}
           >
-            {/* Rating em destaque */}
-            <div className="flex items-baseline justify-center gap-2 mb-5">
-              <span
-                className="font-bold leading-none"
-                style={{ fontSize: 48, color: '#C6FF00' }}
-              >
-                {stats.rating.toLocaleString('pt-BR')}
-              </span>
-              <span className="text-[#6C7278] text-[13px] font-medium mb-1">
-                pts
-              </span>
+            {/* Título */}
+            <h2
+              className="font-semibold text-[21px] mb-4"
+              style={{ color: '#9FB7D6' }}
+            >
+              Meus status
+            </h2>
+
+            {/* Caixa de Rating centralizada */}
+            <div className="flex justify-center mb-5">
+              <div className="relative">
+                <div
+                  className="flex items-center justify-center rounded-[8px]"
+                  style={{
+                    width: 189,
+                    height: 95,
+                    border: '4px solid #88D982',
+                    backgroundColor: '#000F1E',
+                  }}
+                >
+                  <span
+                    className="font-bold leading-none"
+                    style={{ fontSize: 34, color: '#88D982' }}
+                  >
+                    {stats.rating.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+
+                {/* Pill "Rating" sobreposta à borda inferior */}
+                <div
+                  className="absolute flex items-center justify-center rounded-full"
+                  style={{
+                    width: 59,
+                    height: 24,
+                    backgroundColor: '#88D982',
+                    bottom: -12,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                  }}
+                >
+                  <span
+                    className="text-[12px] font-bold"
+                    style={{ color: '#000F1E' }}
+                  >
+                    Rating
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <div
-              className="w-full mb-4"
-              style={{ height: 1, backgroundColor: '#40493D' }}
-            />
+            {/* Espaço para a pill não ficar cortada */}
+            <div className="mt-6" />
 
-            {/* Grade 3 × 2 */}
+            {/* Grade 3 × 2 de estatísticas */}
             <div className="grid grid-cols-3 gap-3">
-              <StatItem label="Partidas" value={stats.partidas} />
-              <StatItem label="Gols" value={stats.gols} />
-              <StatItem label="Assistências" value={stats.assistencias} />
-              <StatItem label="Vitórias" value={stats.vitorias} />
-              <StatItem label="Derrotas" value={stats.derrotas} />
-              <StatItem label="Empates" value={stats.empates} />
+              <StatCard label="Partidas" value={stats.partidas} />
+              <StatCard label="Gols" value={stats.gols} />
+              <StatCard label="Assistências" value={stats.assistencias} />
+              <StatCard label="Vitórias" value={stats.vitorias} />
+              <StatCard label="Derrotas" value={stats.derrotas} />
+              <StatCard label="Empates" value={stats.empates} />
             </div>
           </div>
         </div>
 
-        {/* ── Separador ───────────────────────────────────────── */}
-        <div
-          className="mx-6 my-5"
-          style={{ height: 1, backgroundColor: '#40493D' }}
-        />
+        {/* ── 3. Seção "Seus grupos" ───────────────────────────── */}
+        <div className="px-4 pt-5 pb-4">
+          {/* Cabeçalho da seção */}
+          <div className="flex items-center justify-between mb-3">
+            <h2
+              className="font-semibold text-[21px]"
+              style={{ color: '#9FB7D6' }}
+            >
+              Seus grupos
+            </h2>
+            <button
+              type="button"
+              className="text-[13px] font-medium hover:opacity-80 transition-opacity"
+              style={{ color: '#88D982' }}
+              onClick={() => console.log('TODO: ver todos os grupos')}
+            >
+              View All
+            </button>
+          </div>
 
-        {/* ── Grupos ──────────────────────────────────────────── */}
-        <div className="px-6 pb-4">
-          <h2 className="text-white font-semibold text-[15px] mb-3">
-            Meus Grupos
-          </h2>
-
+          {/* Lista de grupos */}
           <div className="flex flex-col gap-3">
             {groups.map((group) => (
-              <GroupRow key={group.id} group={group} />
+              <GroupCard key={group.id} group={group} />
             ))}
           </div>
         </div>
 
       </main>
 
-      <BottomNavBar active={activeNav} onTabChange={handleNavChange} />
+      <BottomNavBar
+        active={activeNav}
+        onTabChange={handleNavChange}
+        userPhoto={profile.fotoPerfil}
+      />
     </div>
   );
 }
 
 /* ── Sub-componentes ─────────────────────────────────────────────────────── */
 
-function StatItem({ label, value }: { label: string; value: number }) {
+/** Card individual de estatística (sem borda, fundo #102A43) */
+function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex flex-col items-center gap-1">
-      <span className="font-bold text-[24px] leading-none text-white">
+    <div
+      className="flex flex-col items-center justify-center gap-1 rounded-[6px] py-3 px-2"
+      style={{ backgroundColor: '#102A43' }}
+    >
+      <span
+        className="font-bold text-[25px] leading-none"
+        style={{ color: '#9FB7D6' }}
+      >
         {value}
       </span>
-      <span className="text-[#6C7278] text-[11px] text-center leading-tight">
+      <span className="text-[12px] text-center leading-tight" style={{ color: '#6C7278' }}>
         {label}
       </span>
     </div>
   );
 }
 
-function GroupRow({ group }: { group: UserGroup }) {
-  const modalidadeLabels = group.modalidades
-    .map((m) => MODALIDADE_LABEL[m])
-    .join(' · ');
+/** Gera as iniciais de um nome de grupo (máx 2 letras) */
+function getInitials(nome: string): string {
+  return nome
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('');
+}
+
+/** Card de grupo com iniciais, nome, membros e próxima partida */
+function GroupCard({ group }: { group: UserGroup }) {
+  const initials = getInitials(group.nome);
+  // Alterna cor de fundo das iniciais entre grupos
+  const iconBg = group.isAdmin ? '#1A3A5C' : '#2D4A2D';
 
   return (
     <div
-      className="w-full flex items-center gap-3 py-3 px-4 rounded-[12px]"
+      className="w-full flex items-center gap-3 py-3 px-4 rounded-[8px]"
       style={{ backgroundColor: '#000F1E', border: '1px solid #40493D' }}
     >
-      {/* Ícone do grupo */}
+      {/* Quadrado de iniciais */}
       <div
-        className="flex-shrink-0 flex items-center justify-center rounded-[10px] overflow-hidden"
-        style={{
-          width: 44,
-          height: 44,
-          backgroundColor: '#1A3A5C',
-          backgroundImage: group.fotoCapa ? `url(${group.fotoCapa})` : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        className="flex-shrink-0 flex items-center justify-center rounded-[8px]"
+        style={{ width: 48, height: 48, backgroundColor: iconBg }}
       >
-        {!group.fotoCapa && (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9FB7D6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
+        {group.fotoCapa ? (
+          <img
+            src={group.fotoCapa}
+            alt={group.nome}
+            className="w-full h-full object-cover rounded-[8px]"
+          />
+        ) : (
+          <span
+            className="font-bold text-[16px]"
+            style={{ color: '#9FB7D6' }}
+          >
+            {initials}
+          </span>
         )}
       </div>
 
-      {/* Info */}
+      {/* Nome + membros */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-white font-semibold text-[14px] truncate">
-            {group.nome}
-          </span>
-          {group.isAdmin && (
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: '#C6FF00', color: '#102A43' }}
-            >
-              Admin
-            </span>
-          )}
-        </div>
-        <span className="text-[#6C7278] text-[12px]">
-          {modalidadeLabels} · {group.totalMembros} membros
+        <span
+          className="block font-semibold text-[14px] truncate"
+          style={{ color: '#9FB7D6' }}
+        >
+          {group.nome}
+        </span>
+        <span
+          className="text-[12px]"
+          style={{ color: '#6C7278' }}
+        >
+          {group.totalMembros} Members • Next match: Tomorrow
         </span>
       </div>
 
-      {/* Chevron */}
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#40493D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {/* Seta */}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6C7278" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="9 18 15 12 9 6" />
       </svg>
     </div>
