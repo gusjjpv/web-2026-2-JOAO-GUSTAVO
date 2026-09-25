@@ -59,7 +59,7 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
             className="w-full"
             style={{
               height: 120,
-              background: 'linear-gradient(135deg, #009951 0%, #102A43 100%)',
+              background: 'linear-gradient(to bottom, #009951 0%, #009951 40%, #102A43 100%)',
             }}
           />
 
@@ -127,27 +127,37 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
 
         {/* ── Estatísticas ────────────────────────────────────── */}
         <div className="px-6">
-          {/* Rating em destaque */}
-          <div className="flex items-baseline justify-center gap-2 mb-5">
-            <span
-              className="font-bold leading-none"
-              style={{ fontSize: 48, color: '#C6FF00' }}
-            >
-              {stats.rating.toLocaleString('pt-BR')}
-            </span>
-            <span className="text-[#6C7278] text-[13px] font-medium mb-1">
-              pts
-            </span>
-          </div>
+          <div
+            className="w-full rounded-[16px] p-5"
+            style={{ backgroundColor: '#000F1E', border: '1px solid #40493D' }}
+          >
+            {/* Rating em destaque */}
+            <div className="flex items-baseline justify-center gap-2 mb-5">
+              <span
+                className="font-bold leading-none"
+                style={{ fontSize: 48, color: '#C6FF00' }}
+              >
+                {stats.rating.toLocaleString('pt-BR')}
+              </span>
+              <span className="text-[#6C7278] text-[13px] font-medium mb-1">
+                pts
+              </span>
+            </div>
 
-          {/* Grade 3 × 2 */}
-          <div className="grid grid-cols-3 gap-3">
-            <StatItem label="Partidas" value={stats.partidas} />
-            <StatItem label="Gols" value={stats.gols} highlight />
-            <StatItem label="Assistências" value={stats.assistencias} />
-            <StatItem label="Vitórias" value={stats.vitorias} color="#009951" />
-            <StatItem label="Derrotas" value={stats.derrotas} color="#EF4444" />
-            <StatItem label="Empates" value={stats.empates} color="#9FB7D6" />
+            <div
+              className="w-full mb-4"
+              style={{ height: 1, backgroundColor: '#40493D' }}
+            />
+
+            {/* Grade 3 × 2 */}
+            <div className="grid grid-cols-3 gap-3">
+              <StatItem label="Partidas" value={stats.partidas} />
+              <StatItem label="Gols" value={stats.gols} />
+              <StatItem label="Assistências" value={stats.assistencias} />
+              <StatItem label="Vitórias" value={stats.vitorias} />
+              <StatItem label="Derrotas" value={stats.derrotas} />
+              <StatItem label="Empates" value={stats.empates} />
+            </div>
           </div>
         </div>
 
@@ -179,24 +189,10 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
 
 /* ── Sub-componentes ─────────────────────────────────────────────────────── */
 
-function StatItem({
-  label,
-  value,
-  highlight = false,
-  color,
-}: {
-  label: string;
-  value: number;
-  highlight?: boolean;
-  color?: string;
-}) {
-  const valueColor = color ?? (highlight ? '#C6FF00' : '#FFFFFF');
+function StatItem({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <span
-        className="font-bold text-[24px] leading-none"
-        style={{ color: valueColor }}
-      >
+      <span className="font-bold text-[24px] leading-none text-white">
         {value}
       </span>
       <span className="text-[#6C7278] text-[11px] text-center leading-tight">
