@@ -7,6 +7,7 @@ import { HomePage } from './pages/home/HomePage';
 import { CreateGroupPage } from './pages/group/CreateGroupPage';
 import { GroupDetailPage } from './pages/group/GroupDetailPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
+import { EditProfilePage } from './pages/profile/EditProfilePage';
 
 export type Route =
   | 'login'
@@ -16,7 +17,8 @@ export type Route =
   | 'home'
   | 'criar-grupo'
   | 'detalhe-grupo'
-  | 'perfil';
+  | 'perfil'
+  | 'editar-perfil';
 
 function App() {
   const [route, setRoute] = useState<Route>('login');
@@ -42,6 +44,7 @@ function App() {
       />
     ),
     perfil: <ProfilePage navigate={navigate} />,
+    'editar-perfil': <EditProfilePage navigate={navigate} />,
   };
 
   return <>{screens[route]}</>;

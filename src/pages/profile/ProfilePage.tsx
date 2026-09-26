@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { TopBar } from '../../components/layout/TopBar';
 import { BottomNavBar } from '../../components/layout/BottomNavBar';
 import {
-  mockUserProfile,
+  getCurrentProfile,
   mockUserStats,
   mockUserGroups,
   type UserGroup,
@@ -34,7 +34,8 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
     if (tab === 'home') navigate('home');
   };
 
-  const profile = mockUserProfile;
+  // Lê o perfil do store a cada montagem — reflete edições salvas em EditProfilePage
+  const profile = getCurrentProfile();
   const stats = mockUserStats;
   const groups = mockUserGroups;
 
@@ -56,7 +57,7 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
             {/* Ícone de editar — canto superior direito da área */}
             <button
               type="button"
-              onClick={() => console.log('TODO: editar perfil')}
+              onClick={() => navigate('editar-perfil')}
               className="absolute top-0 right-0 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity"
               style={{ width: 32, height: 32, backgroundColor: '#1A3A5C' }}
               aria-label="Editar perfil"

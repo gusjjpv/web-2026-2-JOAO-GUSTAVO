@@ -47,16 +47,6 @@ export interface UserGroup {
 
 /* ── Mock data ──────────────────────────────────────────────────────────── */
 
-export const mockUserProfile: UserProfile = {
-  id: 'usr-001',
-  nome: 'João Gustavo',
-  fotoPerfil: null,
-  posicaoPrincipal: 'Ala',
-  posicaoSecundaria: 'Pivô',
-  peDominante: 'Destro',
-  modalidadePreferida: 'futsal',
-};
-
 export const mockUserStats: UserStats = {
   rating: 1124,
   partidas: 38,
@@ -93,3 +83,30 @@ export const mockUserGroups: UserGroup[] = [
     isAdmin: false,
   },
 ];
+
+/* ── Store em memória do perfil do usuário ──────────────────────────────── */
+// Simula persistência enquanto o backend não existe.
+// Quando integrado com a API, substituir por chamadas HTTP.
+
+let _profile: UserProfile = {
+  id: 'usr-001',
+  nome: 'João Gustavo',
+  fotoPerfil: null,
+  posicaoPrincipal: 'Ala',
+  posicaoSecundaria: 'Pivô',
+  peDominante: 'Destro',
+  modalidadePreferida: 'futsal',
+};
+
+/** Retorna uma cópia imutável do perfil atual. */
+export function getCurrentProfile(): UserProfile {
+  return { ..._profile };
+}
+
+/** Atualiza o perfil em memória (chamado ao salvar edições). */
+export function updateProfile(updates: Partial<Omit<UserProfile, 'id'>>): void {
+  _profile = { ..._profile, ...updates };
+}
+
+/** @deprecated Use getCurrentProfile() em vez desta constante. */
+export const mockUserProfile: UserProfile = _profile;
