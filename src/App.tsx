@@ -30,24 +30,26 @@ function App() {
     setRoute(r);
   };
 
-  const screens: Record<Route, React.ReactNode> = {
-    login: <LoginPage navigate={navigate} />,
-    register: <RegisterPage navigate={navigate} />,
-    'player-info': <PlayerInfoPage navigate={navigate} />,
-    'upload-photo': <UploadPhotoPage navigate={navigate} />,
-    home: <HomePage navigate={navigate} />,
-    'criar-grupo': <CreateGroupPage navigate={navigate} />,
-    'detalhe-grupo': (
-      <GroupDetailPage
-        navigate={navigate}
-        groupData={routeState as Parameters<typeof GroupDetailPage>[0]['groupData']}
-      />
-    ),
-    perfil: <ProfilePage navigate={navigate} />,
-    'editar-perfil': <EditProfilePage navigate={navigate} />,
-  };
-
-  return <>{screens[route]}</>;
+  // Renderização condicional garante que apenas UM componente é montado por vez,
+  // evitando conflitos de hooks entre telas diferentes.
+  return (
+    <>
+      {route === 'login' && <LoginPage navigate={navigate} />}
+      {route === 'register' && <RegisterPage navigate={navigate} />}
+      {route === 'player-info' && <PlayerInfoPage navigate={navigate} />}
+      {route === 'upload-photo' && <UploadPhotoPage navigate={navigate} />}
+      {route === 'home' && <HomePage navigate={navigate} />}
+      {route === 'criar-grupo' && <CreateGroupPage navigate={navigate} />}
+      {route === 'detalhe-grupo' && (
+        <GroupDetailPage
+          navigate={navigate}
+          groupData={routeState as Parameters<typeof GroupDetailPage>[0]['groupData']}
+        />
+      )}
+      {route === 'perfil' && <ProfilePage navigate={navigate} />}
+      {route === 'editar-perfil' && <EditProfilePage navigate={navigate} />}
+    </>
+  );
 }
 
 export default App;
