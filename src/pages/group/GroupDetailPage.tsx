@@ -40,7 +40,8 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
   /* Conecta BottomNavBar à navegação entre telas */
   const handleNavChange = (tab: NavTab) => {
     if (tab === 'home') navigate('home');
-    // outros tabs ainda sem tela própria — apenas atualiza visual
+    if (tab === 'profile') navigate('perfil');
+    // outros tabs ainda sem tela própria
   };
 
   const modalidadeLabels: Record<Modalidade, string> = {
@@ -89,20 +90,6 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
               </svg>
             </div>
           )}
-
-          {/* Botão Voltar */}
-          <button
-            type="button"
-            onClick={() => navigate('home')}
-            className="absolute top-3 left-4 flex items-center gap-1 text-white text-[13px] font-medium hover:opacity-80 transition-opacity"
-            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}
-            aria-label="Voltar"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-            Voltar
-          </button>
         </div>
 
         {/* ── Info + Criar Racha ────────────────────────────────── */}

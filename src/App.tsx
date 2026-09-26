@@ -6,6 +6,8 @@ import { UploadPhotoPage } from './pages/auth/UploadPhotoPage';
 import { HomePage } from './pages/home/HomePage';
 import { CreateGroupPage } from './pages/group/CreateGroupPage';
 import { GroupDetailPage } from './pages/group/GroupDetailPage';
+import { ProfilePage } from './pages/profile/ProfilePage';
+import { EditProfilePage } from './pages/profile/EditProfilePage';
 
 export type Route =
   | 'login'
@@ -14,7 +16,9 @@ export type Route =
   | 'upload-photo'
   | 'home'
   | 'criar-grupo'
-  | 'detalhe-grupo';
+  | 'detalhe-grupo'
+  | 'perfil'
+  | 'editar-perfil';
 
 function App() {
   const [route, setRoute] = useState<Route>('login');
@@ -39,6 +43,8 @@ function App() {
         groupData={routeState as Parameters<typeof GroupDetailPage>[0]['groupData']}
       />
     ),
+    perfil: <ProfilePage navigate={navigate} />,
+    'editar-perfil': <EditProfilePage navigate={navigate} />,
   };
 
   return <>{screens[route]}</>;
