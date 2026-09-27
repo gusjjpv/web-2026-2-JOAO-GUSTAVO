@@ -8,6 +8,7 @@ import { CreateGroupPage } from './pages/group/CreateGroupPage';
 import { GroupDetailPage } from './pages/group/GroupDetailPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { EditProfilePage } from './pages/profile/EditProfilePage';
+import { CreateRachaPage } from './pages/racha/CreateRachaPage';
 
 export type Route =
   | 'login'
@@ -17,6 +18,7 @@ export type Route =
   | 'home'
   | 'criar-grupo'
   | 'detalhe-grupo'
+  | 'criar-racha'
   | 'perfil'
   | 'editar-perfil';
 
@@ -44,6 +46,12 @@ function App() {
         <GroupDetailPage
           navigate={navigate}
           groupData={routeState as Parameters<typeof GroupDetailPage>[0]['groupData']}
+        />
+      )}
+      {route === 'criar-racha' && (
+        <CreateRachaPage
+          navigate={navigate}
+          groupData={routeState as Parameters<typeof CreateRachaPage>[0]['groupData']}
         />
       )}
       {route === 'perfil' && <ProfilePage navigate={navigate} />}
