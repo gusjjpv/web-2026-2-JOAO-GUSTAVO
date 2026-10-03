@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { ConfirmCodePage } from './pages/auth/ConfirmCodePage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { PlayerInfoPage } from './pages/auth/PlayerInfoPage';
 import { UploadPhotoPage } from './pages/auth/UploadPhotoPage';
 import { HomePage } from './pages/home/HomePage';
@@ -17,6 +18,7 @@ export type Route =
   | 'login'
   | 'register'
   | 'confirm-code'
+  | 'esqueci-senha'
   | 'player-info'
   | 'upload-photo'
   | 'home'
@@ -27,7 +29,7 @@ export type Route =
   | 'editar-perfil';
 
 /** Telas acessíveis sem sessão. Todas as outras exigem usuário autenticado. */
-const PUBLIC_ROUTES: Route[] = ['login', 'register', 'confirm-code'];
+const PUBLIC_ROUTES: Route[] = ['login', 'register', 'confirm-code', 'esqueci-senha'];
 
 function isConfirmCodeState(value: unknown): value is ConfirmCodeNavState {
   return (
@@ -78,6 +80,7 @@ function App() {
         />
       )}
       {current === 'register' && <RegisterPage navigate={navigate} />}
+      {current === 'esqueci-senha' && <ForgotPasswordPage navigate={navigate} />}
       {current === 'confirm-code' && isConfirmCodeState(routeState) && (
         <ConfirmCodePage navigate={navigate} state={routeState} />
       )}

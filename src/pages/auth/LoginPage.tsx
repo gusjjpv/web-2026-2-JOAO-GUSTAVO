@@ -113,6 +113,16 @@ export function LoginPage({ navigate, notice }: LoginPageProps) {
           className="mt-[47px]"
         />
 
+        <div className="flex justify-end mt-2">
+          <button
+            type="button"
+            onClick={() => navigate('esqueci-senha')}
+            className="text-[12px] text-[#9FB7D6] hover:text-white hover:underline transition-colors"
+          >
+            Esqueceu sua senha?
+          </button>
+        </div>
+
         {error && (
           <span className="text-red-400 text-[12px] font-medium mt-4 text-center" role="alert">
             {error}
@@ -122,7 +132,7 @@ export function LoginPage({ navigate, notice }: LoginPageProps) {
         <Button
           type="submit"
           disabled={loading}
-          className="mt-[67px] mx-auto"
+          className="mt-[45px] mx-auto"
           style={{ width: 173 }}
         >
           {loading ? 'Entrando...' : 'Entrar'}

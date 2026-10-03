@@ -1,8 +1,10 @@
 import {
   autoSignIn,
+  confirmResetPassword,
   confirmSignUp,
   getCurrentUser,
   resendSignUpCode,
+  resetPassword,
   signIn,
   signOut,
   signUp,
@@ -247,6 +249,43 @@ export async function logout(): Promise<void> {
 
   try {
     await signOut();
+  } catch (error) {
+    throw toServiceError(error);
+  }
+}
+
+/**
+ * Solicita redefinição de senha para o usuário.
+ * O Cognito envia um código de 6 dígitos para o e-mail cadastrado.
+ * Retorna o destino mascarado (ex: j***@g***.com).
+ */
+export async function requestPasswordReset(username: string): Promise<string | undefined> {
+  assertConfigured();
+
+  try {
+    const output = await resetPassword({ username: username.trim() });
+    return output.nextStep.codeDeliveryDetails?.destination;
+  } catch (error) {
+    throw toServiceError(error);
+  }
+}
+
+/**
+ * Confirma a redefinição de senha informando o código e a nova senha.
+ */
+export async function confirmNewPassword(
+  username: string,
+  code: string,
+  newPassword: string,
+): Promise<void> {
+  assertConfigured();
+
+  try {
+    await confirmResetPassword({
+      username: username.trim(),
+      confirmationCode: code.trim(),
+      newPassword,
+    });
   } catch (error) {
     throw toServiceError(error);
   }
