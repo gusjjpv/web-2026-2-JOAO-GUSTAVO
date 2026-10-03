@@ -1,25 +1,52 @@
 import { useState, type FormEvent } from 'react';
 import { Button } from '../../components/ui/Button';
 import { InputField } from '../../components/ui/InputField';
+import { AuthServiceError, login } from '../../services/auth';
 import logoImg from '../../assets/Logo.svg';
 import type { Route } from '../../App';
 
 interface LoginPageProps {
-  navigate: (route: Route) => void;
+  navigate: (route: Route, state?: unknown) => void;
+  /** Mensagem de sucesso exibida acima do formulário (ex: e-mail confirmado). */
+  notice?: string;
 }
 
 /**
  * Página de Login — RachaoApp
  * Figma node: 18-198
+ *
+ * Autenticação via Amazon Cognito (RF-01): login por username + senha.
  */
-export function LoginPage({ navigate }: LoginPageProps) {
-  const [email, setEmail] = useState('');
+export function LoginPage({ navigate, notice }: LoginPageProps) {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // TODO: integrar com o serviço de autenticação
-    navigate('home');
+    setError('');
+
+    if (!username.trim() || !password) {
+      setError('Informe seu usuário e sua senha.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await login(username, password);
+
+      if (result === 'CONFIRM_SIGN_UP') {
+        // Conta criada mas e-mail ainda não confirmado.
+        navigate('confirm-code', { username: username.trim(), resendOnOpen: true });
+        return;
+      }
+      navigate('home');
+    } catch (err) {
+      setError(err instanceof AuthServiceError ? err.message : 'Não foi possível entrar. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,6 +78,12 @@ export function LoginPage({ navigate }: LoginPageProps) {
         </span>
       </div>
 
+      {notice && (
+        <p className="text-[#88D982] text-[13px] font-medium text-center mb-6" role="status">
+          {notice}
+        </p>
+      )}
+
       {/* Formulário */}
       <form
         onSubmit={handleSubmit}
@@ -59,12 +92,15 @@ export function LoginPage({ navigate }: LoginPageProps) {
         noValidate
       >
         <InputField
-          label="Email"
-          type="email"
-          placeholder="seuemail@gmail.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
+          label="Usuário"
+          type="text"
+          placeholder="seu_usuario"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
         />
 
         <InputField
@@ -77,12 +113,29 @@ export function LoginPage({ navigate }: LoginPageProps) {
           className="mt-[47px]"
         />
 
+        <div className="flex justify-end mt-2">
+          <button
+            type="button"
+            onClick={() => navigate('esqueci-senha')}
+            className="text-[12px] text-[#9FB7D6] hover:text-white hover:underline transition-colors"
+          >
+            Esqueceu sua senha?
+          </button>
+        </div>
+
+        {error && (
+          <span className="text-red-400 text-[12px] font-medium mt-4 text-center" role="alert">
+            {error}
+          </span>
+        )}
+
         <Button
           type="submit"
-          className="mt-[67px] mx-auto"
+          disabled={loading}
+          className="mt-[45px] mx-auto"
           style={{ width: 173 }}
         >
-          Entrar
+          {loading ? 'Entrando...' : 'Entrar'}
         </Button>
       </form>
 

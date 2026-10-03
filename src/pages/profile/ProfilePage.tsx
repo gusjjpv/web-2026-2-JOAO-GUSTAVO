@@ -7,6 +7,7 @@ import {
   mockUserGroups,
   type UserGroup,
 } from '../../mock/userData';
+import { logout } from '../../services/auth';
 import type { Route } from '../../App';
 
 type NavTab = 'home' | 'groups' | 'alerts' | 'profile';
@@ -28,10 +29,22 @@ interface ProfilePageProps {
  */
 export function ProfilePage({ navigate }: ProfilePageProps) {
   const [activeNav, setActiveNav] = useState<NavTab>('profile');
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleNavChange = (tab: NavTab) => {
     setActiveNav(tab);
     if (tab === 'home') navigate('home');
+  };
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+      navigate('login');
+    } catch {
+      // Falha ao encerrar a sessão: mantém o usuário na tela.
+      setLoggingOut(false);
+    }
   };
 
   // Lê o perfil do store a cada montagem — reflete edições salvas em EditProfilePage
@@ -202,6 +215,19 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
               <GroupCard key={group.id} group={group} />
             ))}
           </div>
+        </div>
+
+        {/* ── 4. Sair da conta ─────────────────────────────────── */}
+        <div className="px-4 pb-6">
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="w-full py-3 rounded-[8px] text-[14px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
+            style={{ color: '#F87171', border: '1px solid #40493D', backgroundColor: '#000F1E' }}
+          >
+            {loggingOut ? 'Saindo...' : 'Sair da conta'}
+          </button>
         </div>
 
       </main>
