@@ -6,10 +6,11 @@ import {
   resendSignUpCode,
   resetPassword,
   signIn,
+  signInWithRedirect,
   signOut,
   signUp,
 } from 'aws-amplify/auth';
-import { isCognitoConfigured } from '../lib/amplify';
+import { isCognitoConfigured, isOAuthConfigured } from '../lib/amplify';
 import { normalizePhoneBR } from '../lib/phone';
 
 /* ── Tipos ─────────────────────────────────────────────────────────────── */
@@ -286,6 +287,27 @@ export async function confirmNewPassword(
       confirmationCode: code.trim(),
       newPassword,
     });
+  } catch (error) {
+    throw toServiceError(error);
+  }
+}
+
+/**
+ * Inicia o fluxo de autenticação OAuth 2.0 com o Google.
+ * Redireciona o navegador para a tela de consentimento do Google e de volta ao app.
+ */
+export async function loginWithGoogle(): Promise<void> {
+  assertConfigured();
+
+  if (!isOAuthConfigured) {
+    throw new AuthServiceError(
+      'OAUTH_NOT_CONFIGURED',
+      'Domínio do Cognito não configurado. Defina VITE_COGNITO_DOMAIN no .env.local.',
+    );
+  }
+
+  try {
+    await signInWithRedirect({ provider: 'Google' });
   } catch (error) {
     throw toServiceError(error);
   }
