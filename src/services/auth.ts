@@ -2,6 +2,7 @@ import {
   autoSignIn,
   confirmResetPassword,
   confirmSignUp,
+  fetchAuthSession,
   getCurrentUser,
   resendSignUpCode,
   resetPassword,
@@ -323,4 +324,56 @@ export async function getSessionUser(): Promise<{ username: string; userId: stri
   } catch {
     return null;
   }
+}
+
+export interface AuthTokens {
+  idToken?: string;
+  accessToken?: string;
+  idTokenPayload?: Record<string, unknown>;
+  accessTokenPayload?: Record<string, unknown>;
+}
+
+/**
+ * Obtém os tokens JWT da sessão atual (ID Token e Access Token).
+ */
+export async function getAuthTokens(): Promise<AuthTokens | null> {
+  if (!isCognitoConfigured) return null;
+
+  try {
+    const session = await fetchAuthSession();
+    if (!session.tokens) return null;
+
+    return {
+      idToken: session.tokens.idToken?.toString(),
+      accessToken: session.tokens.accessToken?.toString(),
+      idTokenPayload: session.tokens.idToken?.payload as Record<string, unknown>,
+      accessTokenPayload: session.tokens.accessToken?.payload as Record<string, unknown>,
+    };
+  } catch (err) {
+    console.error('[auth] Erro ao obter tokens JWT da sessão:', err);
+    return null;
+  }
+}
+
+/**
+ * Imprime os tokens JWT formatados e decodificados no console do navegador (F12).
+ */
+export async function logAuthTokens(): Promise<void> {
+  const tokens = await getAuthTokens();
+  if (!tokens) {
+    console.warn('%c[auth] Nenhuma sessão ativa com tokens JWT encontrada.', 'color: #EF4444;');
+    return;
+  }
+
+  console.group('%c🔐 TOKENS JWT DO AWS COGNITO (GOOGLE / EMAIL)', 'color: #102A43; background: #C6FF00; font-size: 13px; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
+  console.log('%cℹ️ ID Token (JWT com dados do usuário):', 'color: #4285F4; font-weight: bold;');
+  console.log(tokens.idToken);
+  console.log('%c📋 ID Token Payload (Decodificado):', 'color: #34A853; font-weight: bold;', tokens.idTokenPayload);
+
+  console.log('%cℹ️ Access Token (JWT de autorização de APIs):', 'color: #FBBC05; font-weight: bold;');
+  console.log(tokens.accessToken);
+  console.log('%c📋 Access Token Payload (Decodificado):', 'color: #EA4335; font-weight: bold;', tokens.accessTokenPayload);
+
+  console.log('%c💡 Dica: copie qualquer token acima e cole em https://jwt.io para inspecionar no site.', 'color: #9FB7D6; font-style: italic;');
+  console.groupEnd();
 }
