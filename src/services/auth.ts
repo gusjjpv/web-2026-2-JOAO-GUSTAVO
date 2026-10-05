@@ -349,31 +349,7 @@ export async function getAuthTokens(): Promise<AuthTokens | null> {
       idTokenPayload: session.tokens.idToken?.payload as Record<string, unknown>,
       accessTokenPayload: session.tokens.accessToken?.payload as Record<string, unknown>,
     };
-  } catch (err) {
-    console.error('[auth] Erro ao obter tokens JWT da sessão:', err);
+  } catch {
     return null;
   }
-}
-
-/**
- * Imprime os tokens JWT formatados e decodificados no console do navegador (F12).
- */
-export async function logAuthTokens(): Promise<void> {
-  const tokens = await getAuthTokens();
-  if (!tokens) {
-    console.warn('%c[auth] Nenhuma sessão ativa com tokens JWT encontrada.', 'color: #EF4444;');
-    return;
-  }
-
-  console.group('%c🔐 TOKENS JWT DO AWS COGNITO (GOOGLE / EMAIL)', 'color: #102A43; background: #C6FF00; font-size: 13px; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
-  console.log('%cℹ️ ID Token (JWT com dados do usuário):', 'color: #4285F4; font-weight: bold;');
-  console.log(tokens.idToken);
-  console.log('%c📋 ID Token Payload (Decodificado):', 'color: #34A853; font-weight: bold;', tokens.idTokenPayload);
-
-  console.log('%cℹ️ Access Token (JWT de autorização de APIs):', 'color: #FBBC05; font-weight: bold;');
-  console.log(tokens.accessToken);
-  console.log('%c📋 Access Token Payload (Decodificado):', 'color: #EA4335; font-weight: bold;', tokens.accessTokenPayload);
-
-  console.log('%c💡 Dica: copie qualquer token acima e cole em https://jwt.io para inspecionar no site.', 'color: #9FB7D6; font-style: italic;');
-  console.groupEnd();
 }
