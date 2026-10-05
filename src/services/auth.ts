@@ -2,14 +2,16 @@ import {
   autoSignIn,
   confirmResetPassword,
   confirmSignUp,
+  fetchAuthSession,
   getCurrentUser,
   resendSignUpCode,
   resetPassword,
   signIn,
+  signInWithRedirect,
   signOut,
   signUp,
 } from 'aws-amplify/auth';
-import { isCognitoConfigured } from '../lib/amplify';
+import { isCognitoConfigured, isOAuthConfigured } from '../lib/amplify';
 import { normalizePhoneBR } from '../lib/phone';
 
 /* ── Tipos ─────────────────────────────────────────────────────────────── */
@@ -291,6 +293,27 @@ export async function confirmNewPassword(
   }
 }
 
+/**
+ * Inicia o fluxo de autenticação OAuth 2.0 com o Google.
+ * Redireciona o navegador para a tela de consentimento do Google e de volta ao app.
+ */
+export async function loginWithGoogle(): Promise<void> {
+  assertConfigured();
+
+  if (!isOAuthConfigured) {
+    throw new AuthServiceError(
+      'OAUTH_NOT_CONFIGURED',
+      'Domínio do Cognito não configurado. Defina VITE_COGNITO_DOMAIN no .env.local.',
+    );
+  }
+
+  try {
+    await signInWithRedirect({ provider: 'Google' });
+  } catch (error) {
+    throw toServiceError(error);
+  }
+}
+
 /** Usuário da sessão atual, ou null se não houver sessão válida. */
 export async function getSessionUser(): Promise<{ username: string; userId: string } | null> {
   if (!isCognitoConfigured) return null;
@@ -298,6 +321,34 @@ export async function getSessionUser(): Promise<{ username: string; userId: stri
   try {
     const { username, userId } = await getCurrentUser();
     return { username, userId };
+  } catch {
+    return null;
+  }
+}
+
+export interface AuthTokens {
+  idToken?: string;
+  accessToken?: string;
+  idTokenPayload?: Record<string, unknown>;
+  accessTokenPayload?: Record<string, unknown>;
+}
+
+/**
+ * Obtém os tokens JWT da sessão atual (ID Token e Access Token).
+ */
+export async function getAuthTokens(): Promise<AuthTokens | null> {
+  if (!isCognitoConfigured) return null;
+
+  try {
+    const session = await fetchAuthSession();
+    if (!session.tokens) return null;
+
+    return {
+      idToken: session.tokens.idToken?.toString(),
+      accessToken: session.tokens.accessToken?.toString(),
+      idTokenPayload: session.tokens.idToken?.payload as Record<string, unknown>,
+      accessTokenPayload: session.tokens.accessToken?.payload as Record<string, unknown>,
+    };
   } catch {
     return null;
   }
