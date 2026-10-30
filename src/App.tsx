@@ -11,6 +11,7 @@ import { GroupDetailPage } from './pages/group/GroupDetailPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { EditProfilePage } from './pages/profile/EditProfilePage';
 import { CreateRachaPage } from './pages/racha/CreateRachaPage';
+import ChatGemini from './components/chat/ChatGemini';
 import { useAuthSession } from './hooks/useAuthSession';
 import type { ConfirmCodeNavState } from './services/auth';
 
@@ -102,6 +103,8 @@ function App() {
       )}
       {current === 'perfil' && <ProfilePage navigate={navigate} />}
       {current === 'editar-perfil' && <EditProfilePage navigate={navigate} />}
+      {/* Chat flutuante disponível apenas para usuários autenticados */}
+      {authStatus === 'authenticated' && !PUBLIC_ROUTES.includes(current) && <ChatGemini />}
     </>
   );
 }
