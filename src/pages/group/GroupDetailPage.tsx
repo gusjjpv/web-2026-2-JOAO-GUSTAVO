@@ -123,6 +123,16 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
           >
             + Criar Racha
           </Button>
+
+          {/* CTA: Sorteio de times → partida */}
+          <Button
+            fullWidth
+            variant="outline"
+            style={{ borderRadius: 8 }}
+            onClick={() => navigate('sorteio')}
+          >
+            Sortear Times
+          </Button>
         </div>
 
         {/* ── Abas ─────────────────────────────────────────────── */}

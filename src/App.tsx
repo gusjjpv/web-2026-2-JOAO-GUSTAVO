@@ -11,6 +11,8 @@ import { GroupDetailPage } from './pages/group/GroupDetailPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { EditProfilePage } from './pages/profile/EditProfilePage';
 import { CreateRachaPage } from './pages/racha/CreateRachaPage';
+import { SorteioPage } from './pages/partida/SorteioPage';
+import { PartidaPage } from './pages/partida/PartidaPage';
 import ChatGemini from './components/chat/ChatGemini';
 import { useAuthSession } from './hooks/useAuthSession';
 import type { ConfirmCodeNavState } from './services/auth';
@@ -27,7 +29,9 @@ export type Route =
   | 'detalhe-grupo'
   | 'criar-racha'
   | 'perfil'
-  | 'editar-perfil';
+  | 'editar-perfil'
+  | 'sorteio'
+  | 'partida';
 
 /** Telas acessíveis sem sessão. Todas as outras exigem usuário autenticado. */
 const PUBLIC_ROUTES: Route[] = ['login', 'register', 'confirm-code', 'esqueci-senha'];
@@ -103,8 +107,20 @@ function App() {
       )}
       {current === 'perfil' && <ProfilePage navigate={navigate} />}
       {current === 'editar-perfil' && <EditProfilePage navigate={navigate} />}
-      {/* Chat flutuante disponível apenas para usuários autenticados */}
-      {authStatus === 'authenticated' && !PUBLIC_ROUTES.includes(current) && <ChatGemini />}
+      {current === 'sorteio' && (
+        <SorteioPage
+          navigate={navigate}
+          regras={routeState as Parameters<typeof SorteioPage>[0]['regras']}
+        />
+      )}
+      {current === 'partida' && (
+        <PartidaPage
+          navigate={navigate}
+          state={routeState as Parameters<typeof PartidaPage>[0]['state']}
+        />
+      )}
+      {/* Chat flutuante disponível apenas na tela inicial (HomePage) para usuários autenticados */}
+      {authStatus === 'authenticated' && current === 'home' && <ChatGemini />}
     </>
   );
 }
