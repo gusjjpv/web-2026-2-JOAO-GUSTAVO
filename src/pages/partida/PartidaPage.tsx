@@ -344,24 +344,6 @@ function Partida({
                   )}
                 </button>
               </div>
-
-              {/* Status e regra de vitória */}
-              <div className="flex items-center gap-2 text-[12px]">
-                {acabou ? (
-                  <span className="text-[#FF8080] font-bold">
-                    {atingiuLimiteGols ? 'Limite de gols atingido!' : 'Fim de tempo!'}
-                  </span>
-                ) : !rodando ? (
-                  <span className="text-[#9FB7D6] bg-[#001D32] px-2 py-0.5 rounded-[4px]">
-                    {decorrido === 0 ? '▶ Inicie o tempo para marcar gols' : '⏸ Jogo Pausado'}
-                  </span>
-                ) : (
-                  <span className="text-[#88D982] flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-[#88D982] animate-pulse" />
-                    Em andamento (até {maxGols} gols)
-                  </span>
-                )}
-              </div>
             </div>
 
             {/* Placar */}
@@ -397,14 +379,9 @@ function Partida({
                 className="flex flex-col gap-2 p-4 rounded-[8px] bg-[#000F1E] border border-[#40493D] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]"
                 style={{ borderLeftWidth: 4 }}
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[#CEE5FF] text-[14px] font-semibold leading-5 truncate">
-                    {confronto[lado].nome}
-                  </h3>
-                  <span className="text-[#9FB7D6] text-[11px] font-mono">
-                    {gols[lado]}/{maxGols}
-                  </span>
-                </div>
+                <h3 className="pb-1 text-[#CEE5FF] text-[14px] font-semibold leading-5 truncate">
+                  {confronto[lado].nome}
+                </h3>
 
                 <button
                   type="button"
@@ -415,14 +392,8 @@ function Partida({
                   style={{ backgroundColor: CORES[lado].bg, color: CORES[lado].fg }}
                 >
                   <IconBola size={18} color={CORES[lado].fg} />
-                  + GOL
+                  GOL
                 </button>
-
-                {!emAndamento && (
-                  <span className="text-[10px] text-center text-[#9FB7D6] opacity-75">
-                    {acabou ? 'Partida encerrada' : 'Inicie o tempo'}
-                  </span>
-                )}
               </div>
             );
           })}
