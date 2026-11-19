@@ -24,6 +24,7 @@ interface EditProfilePageProps {
 
 interface EditForm {
   nome: string;
+  usuario: string;
   telefone: string;
   fotoPerfil: string | null;
   posicaoPrincipal: Posicao | '';
@@ -32,7 +33,9 @@ interface EditForm {
   modalidadePreferida: Modalidade;
 }
 
-type FormErrors = Partial<Record<'nome' | 'posicaoPrincipal' | 'peDominante', string>>;
+type FormErrors = Partial<Record<'nome' | 'usuario' | 'posicaoPrincipal' | 'peDominante', string>>;
+
+const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,30}$/;
 
 /* ── Opções dos selects ─────────────────────────────────────────────────── */
 
@@ -73,6 +76,7 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
   const currentProfile = getCurrentProfile();
   const [form, setForm] = useState<EditForm>({
     nome: currentProfile.nome,
+    usuario: currentProfile.usuario ?? '',
     telefone: currentProfile.telefone ?? '',
     fotoPerfil: currentProfile.fotoPerfil,
     posicaoPrincipal: currentProfile.posicaoPrincipal,
@@ -97,6 +101,7 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
         setForm((prev) => ({
           ...prev,
           nome: profile.nome || prev.nome,
+          usuario: profile.usuario || prev.usuario,
           telefone: profile.telefone ?? prev.telefone,
           fotoPerfil: selectedFile ? prev.fotoPerfil : profile.fotoPerfil,
           posicaoPrincipal: profile.posicaoPrincipal || prev.posicaoPrincipal,
@@ -155,6 +160,8 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
     const e: FormErrors = {};
     if (!form.nome.trim() || form.nome.trim().length < 2)
       e.nome = 'Nome deve ter pelo menos 2 caracteres';
+    if (!USERNAME_REGEX.test(form.usuario.trim()))
+      e.usuario = 'Use de 3 a 30 caracteres: letras, números, ponto, hífen ou underline';
     if (!form.posicaoPrincipal)
       e.posicaoPrincipal = 'Selecione a posição principal';
     if (!form.peDominante)
@@ -178,6 +185,7 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
       await saveUserProfile(
         {
           nome: form.nome.trim(),
+          usuario: form.usuario.trim(),
           telefone: form.telefone.trim(),
           posicaoPrincipal: form.posicaoPrincipal,
           posicaoSecundaria: form.posicaoSecundaria,
@@ -296,7 +304,7 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
           {/* Divisor */}
           <div className="w-full" style={{ height: 1, backgroundColor: '#40493D' }} />
 
-          {/* Nome */}
+          {/* Nome completo */}
           <div className="w-full" style={{ maxWidth: 327 }}>
             <InputField
               label="Nome completo"
@@ -309,6 +317,23 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
               }}
               error={errors.nome}
               maxLength={60}
+            />
+          </div>
+
+          {/* Nome de usuário */}
+          <div className="w-full" style={{ maxWidth: 327 }}>
+            <InputField
+              label="Nome de usuário"
+              type="text"
+              placeholder="ex: joao.gustavo"
+              autoCapitalize="none"
+              value={form.usuario}
+              onChange={(e) => {
+                setForm((prev) => ({ ...prev, usuario: e.target.value }));
+                setErrors((prev) => ({ ...prev, usuario: undefined }));
+              }}
+              error={errors.usuario}
+              maxLength={30}
             />
           </div>
 

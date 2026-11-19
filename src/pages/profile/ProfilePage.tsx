@@ -108,7 +108,7 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
               {profile.fotoPerfil ? (
                 <img
                   src={profile.fotoPerfil}
-                  alt={profile.nome}
+                  alt={profile.usuario || profile.nome}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -119,10 +119,10 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
               )}
             </div>
 
-            {/* Nome + posição + pé */}
-            <div className="flex flex-col gap-1">
-              <h1 className="text-white font-semibold text-[20px] leading-tight">
-                {profile.nome}
+            {/* Nome de usuário + posição + pé */}
+            <div className="flex flex-col gap-1 min-w-0 pr-9">
+              <h1 className="text-white font-semibold text-[20px] leading-tight truncate">
+                {profile.usuario || profile.nome}
               </h1>
               {/* Posição e pé dominante na mesma linha */}
               <div className="flex items-center gap-6">
