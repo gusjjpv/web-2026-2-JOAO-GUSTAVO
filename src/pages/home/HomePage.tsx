@@ -19,6 +19,7 @@ export function HomePage({ navigate }: HomePageProps) {
 
   const handleNavChange = (tab: NavTab) => {
     setActiveTab(tab);
+    if (tab === 'groups') navigate('detalhe-grupo');
     if (tab === 'profile') navigate('perfil');
   };
 

@@ -3,6 +3,7 @@ import { TopBar } from '../../components/layout/TopBar';
 import { BottomNavBar } from '../../components/layout/BottomNavBar';
 import { PlayerRow } from '../../components/match/PlayerRow';
 import {
+  getRegrasRacha,
   mockJogadoresConfirmados,
   ratingTotal,
   sortearTimes,
@@ -80,10 +81,14 @@ function TeamCard({ time, destaque }: { time: Time; destaque: boolean }) {
 export function SorteioPage({ navigate, regras }: SorteioPageProps) {
   // TODO: substituir pelo GET dos jogadores confirmados na ocorrência do racha
   const jogadores = mockJogadoresConfirmados;
+  const regrasEfetivas = { ...getRegrasRacha(), ...regras };
   const [equilibrar, setEquilibrar] = useState(true);
-  const [times, setTimes] = useState<Time[]>(() => sortearTimes(jogadores, undefined, true));
+  const [times, setTimes] = useState<Time[]>(() =>
+    sortearTimes(jogadores, regrasEfetivas.vagasPorTime, true),
+  );
 
-  const refazer = (balancear = equilibrar) => setTimes(sortearTimes(jogadores, undefined, balancear));
+  const refazer = (balancear = equilibrar) =>
+    setTimes(sortearTimes(jogadores, regrasEfetivas.vagasPorTime, balancear));
 
   const alternarEquilibrio = () => {
     const novo = !equilibrar;
@@ -92,12 +97,13 @@ export function SorteioPage({ navigate, regras }: SorteioPageProps) {
   };
 
   const iniciarPartidas = () => {
-    const state: PartidaNavState = { times, regras };
+    const state: PartidaNavState = { times, regras: regrasEfetivas };
     navigate('partida', state);
   };
 
   const handleNavChange = (tab: NavTab) => {
     if (tab === 'home') navigate('home');
+    if (tab === 'groups') navigate('detalhe-grupo');
     if (tab === 'profile') navigate('perfil');
   };
 

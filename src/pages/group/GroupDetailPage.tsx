@@ -119,7 +119,13 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
           <Button
             fullWidth
             style={{ borderRadius: 8, marginTop: 4 }}
-            onClick={() => navigate('criar-racha', { nome: groupData?.nome ?? 'Meu Grupo' })}
+            onClick={() =>
+              navigate('criar-racha', {
+                nome: groupData?.nome ?? 'Meu Grupo',
+                modalidades: groupData?.modalidades ?? [],
+                fotoCapa: groupData?.fotoCapa ?? null,
+              })
+            }
           >
             + Criar Racha
           </Button>

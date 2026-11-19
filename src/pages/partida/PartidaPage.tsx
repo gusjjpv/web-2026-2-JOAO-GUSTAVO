@@ -3,7 +3,9 @@ import { TopBar } from '../../components/layout/TopBar';
 import { SelectPlayerModal, type EtapaModal } from '../../components/match/SelectPlayerModal';
 import {
   GOLS_PADRAO,
+  atualizarEstatisticasJogador,
   formatarTempo,
+  getRegrasRacha,
   proximoConfronto,
   type EventoPartida,
   type Jogador,
@@ -72,12 +74,14 @@ export function PartidaPage({ navigate, state }: PartidaPageProps) {
     );
   }
 
+  const regrasPadrao = getRegrasRacha();
+
   return (
     <Partida
       navigate={navigate}
       timesIniciais={state.times}
-      tempoMinutos={state.regras?.tempoMinutos}
-      maxGolsRegra={state.regras?.maxGols}
+      tempoMinutos={state.regras?.tempoMinutos ?? regrasPadrao.tempoMinutos}
+      maxGolsRegra={state.regras?.maxGols ?? regrasPadrao.maxGols}
     />
   );
 }
@@ -172,7 +176,14 @@ function Partida({
       setRodando(false);
     }
 
-    // Atualiza jogador na fila de forma imutável (penalidade de rating e contagem de gol contra)
+    // Contabiliza o gol nas estatísticas do jogador e aplica punição no rating (-0.2)
+    atualizarEstatisticasJogador(jogadorAdversario.id, {
+      gols: 1,
+      golsContra: 1,
+      deltaRating: -0.2,
+    });
+
+    // Atualiza jogador na fila de forma imutável (penalidade de rating e contagem de gol/gol contra)
     setFila((prevFila) =>
       prevFila.map((time) => ({
         ...time,
@@ -181,6 +192,7 @@ function Partida({
             return {
               ...j,
               rating: Math.max(1.0, +(j.rating - 0.2).toFixed(1)),
+              gols: (j.gols || 0) + 1,
               golsContra: (j.golsContra || 0) + 1,
             };
           }
@@ -216,6 +228,11 @@ function Partida({
 
     if (novoGols[ladoGol] >= maxGols) {
       setRodando(false);
+    }
+
+    atualizarEstatisticasJogador(autorId, { gols: 1, deltaRating: 0.05 });
+    if (assistId) {
+      atualizarEstatisticasJogador(assistId, { assistencias: 1, deltaRating: 0.03 });
     }
 
     // Atualiza estatísticas e rating de forma imutável

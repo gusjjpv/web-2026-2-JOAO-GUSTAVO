@@ -39,6 +39,7 @@ export interface EventoPartida {
 export interface RegrasRacha {
   tempoMinutos?: number;
   maxGols?: number;
+  vagasPorTime?: number;
 }
 
 /** Dados repassados da tela de sorteio para a tela de partida (via routeState). */
@@ -50,6 +51,59 @@ export interface PartidaNavState {
 export const JOGADORES_POR_TIME = 5;
 export const DURACAO_PADRAO_SEG = 10 * 60;
 export const GOLS_PADRAO = 2;
+
+/* ── Store em memória das regras do racha atual ─────────────────────────── */
+
+let _regrasAtuais: Required<RegrasRacha> = {
+  tempoMinutos: 10,
+  maxGols: GOLS_PADRAO,
+  vagasPorTime: JOGADORES_POR_TIME,
+};
+
+export function getRegrasRacha(): Required<RegrasRacha> {
+  return { ..._regrasAtuais };
+}
+
+export function setRegrasRacha(regras: RegrasRacha): Required<RegrasRacha> {
+  _regrasAtuais = {
+    tempoMinutos:
+      regras.tempoMinutos && regras.tempoMinutos > 0
+        ? regras.tempoMinutos
+        : _regrasAtuais.tempoMinutos,
+    maxGols:
+      regras.maxGols && regras.maxGols > 0 ? regras.maxGols : _regrasAtuais.maxGols,
+    vagasPorTime:
+      regras.vagasPorTime && regras.vagasPorTime > 0
+        ? regras.vagasPorTime
+        : _regrasAtuais.vagasPorTime,
+  };
+  return getRegrasRacha();
+}
+
+/**
+ * Atualiza estatísticas e rating de um jogador no mock em memória
+ * (ex: gol marcado, assistência ou gol contra com punição no rating).
+ */
+export function atualizarEstatisticasJogador(
+  jogadorId: string,
+  delta: { gols?: number; golsContra?: number; assistencias?: number; deltaRating?: number },
+): void {
+  const idx = mockJogadoresConfirmados.findIndex((j) => j.id === jogadorId);
+  if (idx === -1) return;
+  const atual = mockJogadoresConfirmados[idx];
+  const novoRating =
+    delta.deltaRating !== undefined
+      ? Math.min(5.0, Math.max(1.0, +(atual.rating + delta.deltaRating).toFixed(1)))
+      : atual.rating;
+
+  mockJogadoresConfirmados[idx] = {
+    ...atual,
+    gols: (atual.gols ?? 0) + (delta.gols ?? 0),
+    golsContra: (atual.golsContra ?? 0) + (delta.golsContra ?? 0),
+    assistencias: (atual.assistencias ?? 0) + (delta.assistencias ?? 0),
+    rating: novoRating,
+  };
+}
 
 /* ── Mock: jogadores confirmados no racha ───────────────────────────────── */
 

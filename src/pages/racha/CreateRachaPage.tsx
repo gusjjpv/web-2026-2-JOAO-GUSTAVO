@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { InputField } from '../../components/ui/InputField';
 import { Button } from '../../components/ui/Button';
+import { getRegrasRacha, setRegrasRacha } from '../../mock/matchData';
 import type { Route } from '../../App';
 
 interface CreateRachaPageProps {
   navigate: (route: Route, state?: unknown) => void;
   /** Dados do grupo pai (passados via routeState) */
-  groupData?: { nome: string };
+  groupData?: { nome: string; modalidades?: ('futsal' | 'society')[]; fotoCapa?: string | null };
 }
 
 type Modalidade = 'futsal' | 'society';
@@ -44,6 +45,7 @@ const MODALIDADES: { label: string; value: Modalidade }[] = [
  *  - Observações (opcional)
  */
 export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
+  const regrasIniciais = getRegrasRacha();
   const [form, setForm] = useState<RachaForm>({
     titulo: '',
     data: '',
@@ -52,8 +54,8 @@ export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
     maxJogadores: '',
     vagasPorTime: '',
     modalidade: '',
-    tempoPorPartida: '10',
-    maxGols: '2',
+    tempoPorPartida: String(regrasIniciais.tempoMinutos),
+    maxGols: String(regrasIniciais.maxGols),
     observacoes: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -134,8 +136,14 @@ export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
       observacoes: form.observacoes.trim() || null,
     };
 
+    setRegrasRacha({
+      tempoMinutos: rachaData.tempoPorPartida,
+      maxGols: rachaData.maxGols,
+      vagasPorTime: rachaData.vagasPorTime,
+    });
+
     console.log('Racha criado:', rachaData);
-    navigate('detalhe-grupo');
+    navigate('detalhe-grupo', groupData);
   };
 
   /* ── Render ──────────────────────────────────────────────────────────── */
@@ -151,7 +159,7 @@ export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
       >
         <button
           type="button"
-          onClick={() => navigate('detalhe-grupo')}
+          onClick={() => navigate('detalhe-grupo', groupData)}
           className="flex items-center gap-2 text-[#BFCABA] hover:text-white transition-colors text-[14px] font-medium"
           aria-label="Voltar"
         >
