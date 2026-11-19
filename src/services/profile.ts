@@ -234,7 +234,7 @@ function syncProfileToStore(
 
   if (apiProfile && apiProfile.userId) {
     updateStats({
-      rating: Number(apiProfile.rating ?? 400),
+      rating: Number(apiProfile.rating ?? 1000),
       partidas: Number(apiProfile.qtdPartidas ?? 0),
       gols: Number(apiProfile.qtdGols ?? 0),
       assistencias: Number(apiProfile.qtdAssistencias ?? 0),

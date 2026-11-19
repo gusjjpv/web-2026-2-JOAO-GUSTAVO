@@ -107,7 +107,7 @@ const INITIAL_PROFILE: UserProfile = {
 };
 
 const INITIAL_STATS: UserStats = {
-  rating: 400,
+  rating: 1000,
   partidas: 0,
   gols: 0,
   assistencias: 0,
