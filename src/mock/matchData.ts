@@ -42,23 +42,49 @@ export interface RegrasRacha {
   vagasPorTime?: number;
 }
 
+export interface PartidaConcluida {
+  id: string;
+  numero: number;
+  nomeTimeEsq: string;
+  nomeTimeDir: string;
+  golsEsq: number;
+  golsDir: number;
+  eventos: EventoPartida[];
+  duracaoSegundos: number;
+}
+
+export interface SessaoPartidaAtiva {
+  fila: Time[];
+  numeroPartida: number;
+  gols: [number, number];
+  eventos: EventoPartida[];
+  decorrido: number;
+  regras: Required<RegrasRacha>;
+  partidasConcluidas: PartidaConcluida[];
+  jogadoresAusentes: Jogador[];
+}
+
 /** Dados repassados da tela de sorteio para a tela de partida (via routeState). */
 export interface PartidaNavState {
-  times: Time[];
+  times?: Time[];
   regras?: RegrasRacha;
+  retomarSessao?: boolean;
 }
 
 export const JOGADORES_POR_TIME = 5;
 export const DURACAO_PADRAO_SEG = 10 * 60;
 export const GOLS_PADRAO = 2;
 
-/* ── Store em memória das regras do racha atual ─────────────────────────── */
+/* ── Store em memória das regras, sessão pausada e histórico do racha ───── */
 
 let _regrasAtuais: Required<RegrasRacha> = {
   tempoMinutos: 10,
   maxGols: GOLS_PADRAO,
   vagasPorTime: JOGADORES_POR_TIME,
 };
+
+let _sessaoAtiva: SessaoPartidaAtiva | null = null;
+let _historicoPartidas: PartidaConcluida[] = [];
 
 export function getRegrasRacha(): Required<RegrasRacha> {
   return { ..._regrasAtuais };
@@ -78,6 +104,40 @@ export function setRegrasRacha(regras: RegrasRacha): Required<RegrasRacha> {
         : _regrasAtuais.vagasPorTime,
   };
   return getRegrasRacha();
+}
+
+export function getSessaoPartidaAtiva(): SessaoPartidaAtiva | null {
+  return _sessaoAtiva;
+}
+
+export function salvarSessaoPartidaAtiva(sessao: SessaoPartidaAtiva | null): void {
+  _sessaoAtiva = sessao;
+}
+
+export function getHistoricoPartidas(): PartidaConcluida[] {
+  return [..._historicoPartidas];
+}
+
+export function registrarPartidasConcluidas(partidas: PartidaConcluida[]): void {
+  if (partidas.length === 0) return;
+  const idsExistentes = new Set(_historicoPartidas.map((p) => p.id));
+  const novas = partidas.filter((p) => !idsExistentes.has(p.id));
+  _historicoPartidas = [...novas, ..._historicoPartidas];
+}
+
+export function criarJogadorAtrasado(nome: string, rating = 4.0, goleiro = false): Jogador {
+  const novo: Jogador = {
+    id: `j-extra-${Date.now()}`,
+    nome: nome.trim(),
+    rating: Math.min(5.0, Math.max(1.0, +rating.toFixed(1))),
+    goleiro,
+    foto: null,
+    gols: 0,
+    golsContra: 0,
+    assistencias: 0,
+  };
+  mockJogadoresConfirmados.push(novo);
+  return novo;
 }
 
 /**
@@ -203,14 +263,40 @@ export function formatarTempo(segundos: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+export type OpcaoDesempate = 'esq' | 'dir' | 'ambos_saem';
+
 /**
  * Regra "quem ganha fica": o vencedor permanece e enfrenta o próximo da fila;
- * o perdedor vai para o fim da fila. Em caso de empate, sai o time que já estava
- * em quadra (lado esquerdo) e o desafiante permanece.
+ * o perdedor vai para o fim da fila. Em caso de empate, utiliza a decisão escolhida
+ * pelo organizador (`esq`, `dir` ou `ambos_saem`).
  */
-export function proximoConfronto(fila: Time[], golsEsq: number, golsDir: number): Time[] {
+export function proximoConfronto(
+  fila: Time[],
+  golsEsq: number,
+  golsDir: number,
+  desempate?: OpcaoDesempate,
+): Time[] {
   const [esq, dir, ...resto] = fila;
-  const vencedor = golsEsq > golsDir ? esq : dir;
+
+  if (golsEsq === golsDir && desempate === 'ambos_saem') {
+    if (resto.length >= 2) {
+      const [prox1, prox2, ...demais] = resto;
+      return [prox1, prox2, ...demais, esq, dir];
+    }
+    if (resto.length === 1) {
+      return [resto[0], dir, esq];
+    }
+    return [dir, esq];
+  }
+
+  const vencedor =
+    golsEsq > golsDir
+      ? esq
+      : golsDir > golsEsq
+        ? dir
+        : desempate === 'esq'
+          ? esq
+          : dir;
   const perdedor = vencedor === esq ? dir : esq;
   if (resto.length === 0) return [vencedor, perdedor];
   const [proximo, ...demais] = resto;

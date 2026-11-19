@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { TopBar } from '../../components/layout/TopBar';
 import { BottomNavBar } from '../../components/layout/BottomNavBar';
 import { PlayerRow } from '../../components/match/PlayerRow';
+import { EditTeamsModal } from '../../components/match/EditTeamsModal';
 import {
   getRegrasRacha,
   mockJogadoresConfirmados,
   ratingTotal,
+  salvarSessaoPartidaAtiva,
   sortearTimes,
   type Jogador,
   type PartidaNavState,
@@ -86,9 +88,13 @@ export function SorteioPage({ navigate, regras }: SorteioPageProps) {
   const [times, setTimes] = useState<Time[]>(() =>
     sortearTimes(jogadores, regrasEfetivas.vagasPorTime, true),
   );
+  const [jogadoresAusentes, setJogadoresAusentes] = useState<Jogador[]>([]);
+  const [modalEditarTimes, setModalEditarTimes] = useState(false);
 
-  const refazer = (balancear = equilibrar) =>
-    setTimes(sortearTimes(jogadores, regrasEfetivas.vagasPorTime, balancear));
+  const refazer = (balancear = equilibrar) => {
+    setJogadoresAusentes([]);
+    setTimes(sortearTimes(mockJogadoresConfirmados, regrasEfetivas.vagasPorTime, balancear));
+  };
 
   const alternarEquilibrio = () => {
     const novo = !equilibrar;
@@ -97,8 +103,60 @@ export function SorteioPage({ navigate, regras }: SorteioPageProps) {
   };
 
   const iniciarPartidas = () => {
+    salvarSessaoPartidaAtiva(null);
     const state: PartidaNavState = { times, regras: regrasEfetivas };
     navigate('partida', state);
+  };
+
+  const handleMoverJogador = (jogadorId: string, timeOrigemId: string, timeDestinoId: string) => {
+    if (timeOrigemId === timeDestinoId) return;
+    setTimes((prev) => {
+      let movido: Jogador | null = null;
+      const semOrigem = prev.map((t) => {
+        if (t.id !== timeOrigemId) return t;
+        const encontrado = t.jogadores.find((j) => j.id === jogadorId);
+        if (encontrado) movido = encontrado;
+        return { ...t, jogadores: t.jogadores.filter((j) => j.id !== jogadorId) };
+      });
+      if (!movido) return prev;
+      return semOrigem.map((t) =>
+        t.id === timeDestinoId ? { ...t, jogadores: [...t.jogadores, movido!] } : t,
+      );
+    });
+  };
+
+  const handleRemoverJogador = (jogadorId: string, timeOrigemId: string) => {
+    setTimes((prev) =>
+      prev.map((t) => {
+        if (t.id !== timeOrigemId) return t;
+        const saindo = t.jogadores.find((j) => j.id === jogadorId);
+        if (saindo) {
+          setJogadoresAusentes((aus) =>
+            aus.some((x) => x.id === saindo.id) ? aus : [...aus, saindo],
+          );
+        }
+        return { ...t, jogadores: t.jogadores.filter((j) => j.id !== jogadorId) };
+      }),
+    );
+  };
+
+  const handleReintegrarAusente = (jogadorId: string, timeDestinoId: string) => {
+    const jogador = jogadoresAusentes.find((j) => j.id === jogadorId);
+    if (!jogador) return;
+    setJogadoresAusentes((prev) => prev.filter((j) => j.id !== jogadorId));
+    setTimes((prev) =>
+      prev.map((t) =>
+        t.id === timeDestinoId ? { ...t, jogadores: [...t.jogadores, jogador] } : t,
+      ),
+    );
+  };
+
+  const handleAdicionarAtrasado = (novoJogador: Jogador, timeDestinoId: string) => {
+    setTimes((prev) =>
+      prev.map((t) =>
+        t.id === timeDestinoId ? { ...t, jogadores: [...t.jogadores, novoJogador] } : t,
+      ),
+    );
   };
 
   const handleNavChange = (tab: NavTab) => {
@@ -154,7 +212,19 @@ export function SorteioPage({ navigate, regras }: SorteioPageProps) {
         </div>
 
         {/* ── Ações ─────────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-4 pt-6 border-t border-[#40493D]">
+        <div className="flex flex-col gap-3 pt-6 border-t border-[#40493D]">
+          <button
+            type="button"
+            onClick={() => setModalEditarTimes(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-[4px] bg-[#001D32] border border-[#40493D] text-[#CEE5FF] text-[14px] font-semibold leading-5 hover:bg-[#012138] transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Editar Times / Realocar Jogadores
+          </button>
+
           <button
             type="button"
             onClick={() => refazer()}
@@ -182,6 +252,19 @@ export function SorteioPage({ navigate, regras }: SorteioPageProps) {
       </main>
 
       <BottomNavBar active="groups" onTabChange={handleNavChange} />
+
+      {modalEditarTimes && (
+        <EditTeamsModal
+          times={times}
+          jogadoresAusentes={jogadoresAusentes}
+          vagasPorTime={regrasEfetivas.vagasPorTime}
+          onMoverJogador={handleMoverJogador}
+          onRemoverJogador={handleRemoverJogador}
+          onReintegrarAusente={handleReintegrarAusente}
+          onAdicionarAtrasado={handleAdicionarAtrasado}
+          onClose={() => setModalEditarTimes(false)}
+        />
+      )}
     </div>
   );
 }
