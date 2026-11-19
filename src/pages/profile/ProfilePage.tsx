@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TopBar } from '../../components/layout/TopBar';
 import { BottomNavBar } from '../../components/layout/BottomNavBar';
 import {
   getCurrentProfile,
-  mockUserStats,
+  getCurrentStats,
   mockUserGroups,
+  resetProfileStore,
   type UserGroup,
 } from '../../mock/userData';
 import { logout } from '../../services/auth';
+import { fetchUserProfile } from '../../services/profile';
 import type { Route } from '../../App';
 
 type NavTab = 'home' | 'groups' | 'alerts' | 'profile';
@@ -30,6 +32,24 @@ interface ProfilePageProps {
 export function ProfilePage({ navigate }: ProfilePageProps) {
   const [activeNav, setActiveNav] = useState<NavTab>('profile');
   const [loggingOut, setLoggingOut] = useState(false);
+  const [profile, setProfile] = useState(() => getCurrentProfile());
+  const [stats, setStats] = useState(() => getCurrentStats());
+
+  useEffect(() => {
+    let active = true;
+    fetchUserProfile()
+      .then(() => {
+        if (!active) return;
+        setProfile(getCurrentProfile());
+        setStats(getCurrentStats());
+      })
+      .catch((err) => {
+        console.error('Erro ao carregar perfil da API:', err);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleNavChange = (tab: NavTab) => {
     setActiveNav(tab);
@@ -41,6 +61,7 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
     setLoggingOut(true);
     try {
       await logout();
+      resetProfileStore();
       navigate('login');
     } catch {
       // Falha ao encerrar a sessão: mantém o usuário na tela.
@@ -48,9 +69,6 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
     }
   };
 
-  // Lê o perfil do store a cada montagem — reflete edições salvas em EditProfilePage
-  const profile = getCurrentProfile();
-  const stats = mockUserStats;
   const groups = mockUserGroups;
 
   return (
@@ -90,7 +108,7 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
               {profile.fotoPerfil ? (
                 <img
                   src={profile.fotoPerfil}
-                  alt={profile.nome}
+                  alt={profile.usuario || profile.nome}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -101,10 +119,10 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
               )}
             </div>
 
-            {/* Nome + posição + pé */}
-            <div className="flex flex-col gap-1">
-              <h1 className="text-white font-semibold text-[20px] leading-tight">
-                {profile.nome}
+            {/* Nome de usuário + posição + pé */}
+            <div className="flex flex-col gap-1 min-w-0 pr-9">
+              <h1 className="text-white font-semibold text-[20px] leading-tight truncate">
+                {profile.usuario || profile.nome}
               </h1>
               {/* Posição e pé dominante na mesma linha */}
               <div className="flex items-center gap-6">

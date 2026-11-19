@@ -19,7 +19,12 @@ export type Modalidade = 'futsal' | 'society';
 export interface UserProfile {
   id: string;
   nome: string;
+  email?: string;
+  usuario?: string;
+  telefone?: string;
   fotoPerfil: string | null;
+  photoKey?: string | null;
+  dataCadastro?: string;
   posicaoPrincipal: Posicao;
   posicaoSecundaria: Posicao | null;
   peDominante: PeDominante;
@@ -85,27 +90,59 @@ export const mockUserGroups: UserGroup[] = [
 ];
 
 /* ── Store em memória do perfil do usuário ──────────────────────────────── */
-// Simula persistência enquanto o backend não existe.
-// Quando integrado com a API, substituir por chamadas HTTP.
+// Cache local sincronizado com a API Gateway / DynamoDB / S3 (src/services/profile.ts).
 
-let _profile: UserProfile = {
+const INITIAL_PROFILE: UserProfile = {
   id: 'usr-001',
-  nome: 'João Gustavo',
+  nome: 'Atleta',
+  email: '',
+  usuario: '',
+  telefone: '',
   fotoPerfil: null,
+  photoKey: null,
   posicaoPrincipal: 'Ala',
-  posicaoSecundaria: 'Pivô',
+  posicaoSecundaria: null,
   peDominante: 'Destro',
   modalidadePreferida: 'futsal',
 };
+
+const INITIAL_STATS: UserStats = {
+  rating: 1000,
+  partidas: 0,
+  gols: 0,
+  assistencias: 0,
+  vitorias: 0,
+  derrotas: 0,
+  empates: 0,
+};
+
+let _profile: UserProfile = { ...INITIAL_PROFILE };
+let _stats: UserStats = { ...INITIAL_STATS };
 
 /** Retorna uma cópia imutável do perfil atual. */
 export function getCurrentProfile(): UserProfile {
   return { ..._profile };
 }
 
-/** Atualiza o perfil em memória (chamado ao salvar edições). */
-export function updateProfile(updates: Partial<Omit<UserProfile, 'id'>>): void {
+/** Atualiza o perfil em memória (chamado ao carregar da API ou salvar edições). */
+export function updateProfile(updates: Partial<UserProfile>): void {
   _profile = { ..._profile, ...updates };
+}
+
+/** Retorna uma cópia imutável das estatísticas atuais do usuário. */
+export function getCurrentStats(): UserStats {
+  return { ..._stats };
+}
+
+/** Atualiza as estatísticas em memória a partir da resposta do DynamoDB. */
+export function updateStats(updates: Partial<UserStats>): void {
+  _stats = { ..._stats, ...updates };
+}
+
+/** Limpa o cache local ao encerrar a sessão (logout). */
+export function resetProfileStore(): void {
+  _profile = { ...INITIAL_PROFILE };
+  _stats = { ...INITIAL_STATS };
 }
 
 /** @deprecated Use getCurrentProfile() em vez desta constante. */

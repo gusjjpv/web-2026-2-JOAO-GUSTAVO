@@ -14,6 +14,7 @@ import {
   type RegrasRacha,
   type Time,
 } from '../../mock/matchData';
+import { getCurrentProfile } from '../../mock/userData';
 import type { Route } from '../../App';
 
 type NavTab = 'home' | 'groups' | 'alerts' | 'profile';
@@ -251,7 +252,11 @@ export function SorteioPage({ navigate, regras }: SorteioPageProps) {
         </div>
       </main>
 
-      <BottomNavBar active="groups" onTabChange={handleNavChange} />
+      <BottomNavBar
+        active="groups"
+        onTabChange={handleNavChange}
+        userPhoto={getCurrentProfile().fotoPerfil}
+      />
 
       {modalEditarTimes && (
         <EditTeamsModal
