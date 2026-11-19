@@ -106,8 +106,18 @@ const INITIAL_PROFILE: UserProfile = {
   modalidadePreferida: 'futsal',
 };
 
+const INITIAL_STATS: UserStats = {
+  rating: 400,
+  partidas: 0,
+  gols: 0,
+  assistencias: 0,
+  vitorias: 0,
+  derrotas: 0,
+  empates: 0,
+};
+
 let _profile: UserProfile = { ...INITIAL_PROFILE };
-let _stats: UserStats = { ...mockUserStats };
+let _stats: UserStats = { ...INITIAL_STATS };
 
 /** Retorna uma cópia imutável do perfil atual. */
 export function getCurrentProfile(): UserProfile {
@@ -132,7 +142,7 @@ export function updateStats(updates: Partial<UserStats>): void {
 /** Limpa o cache local ao encerrar a sessão (logout). */
 export function resetProfileStore(): void {
   _profile = { ...INITIAL_PROFILE };
-  _stats = { ...mockUserStats };
+  _stats = { ...INITIAL_STATS };
 }
 
 /** @deprecated Use getCurrentProfile() em vez desta constante. */

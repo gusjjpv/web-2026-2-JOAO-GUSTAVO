@@ -58,6 +58,10 @@ export interface ProfileApiItem {
   qtdGols: number;
   qtdAssistencias: number;
   qtdPartidas: number;
+  qtdVitorias?: number;
+  qtdDerrotas?: number;
+  qtdEmpate?: number;
+  qtdEmpates?: number;
   photoKey: string | null;
   updatedAt?: string;
 }
@@ -75,6 +79,9 @@ export interface SaveProfilePayload {
   qtdGols?: number;
   qtdAssistencias?: number;
   qtdPartidas?: number;
+  qtdVitorias?: number;
+  qtdDerrotas?: number;
+  qtdEmpate?: number;
 }
 
 interface PutProfileResponse {
@@ -104,6 +111,10 @@ interface GetProfileRawResponse {
   qtdGols?: number;
   qtdAssistencias?: number;
   qtdPartidas?: number;
+  qtdVitorias?: number;
+  qtdDerrotas?: number;
+  qtdEmpate?: number;
+  qtdEmpates?: number;
   photoKey?: string | null;
   error?: string;
 }
@@ -223,10 +234,13 @@ function syncProfileToStore(
 
   if (apiProfile && apiProfile.userId) {
     updateStats({
-      rating: Number(apiProfile.rating ?? 0),
+      rating: Number(apiProfile.rating ?? 400),
       partidas: Number(apiProfile.qtdPartidas ?? 0),
       gols: Number(apiProfile.qtdGols ?? 0),
       assistencias: Number(apiProfile.qtdAssistencias ?? 0),
+      vitorias: Number(apiProfile.qtdVitorias ?? 0),
+      derrotas: Number(apiProfile.qtdDerrotas ?? 0),
+      empates: Number(apiProfile.qtdEmpates ?? apiProfile.qtdEmpate ?? 0),
     });
   }
 
