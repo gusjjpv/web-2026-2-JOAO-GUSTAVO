@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { TopBar } from '../../components/layout/TopBar';
 import { BottomNavBar } from '../../components/layout/BottomNavBar';
+import {
+  formatarTempo,
+  getHistoricoPartidas,
+  getSessaoPartidaAtiva,
+  mockJogadoresConfirmados,
+} from '../../mock/matchData';
 import type { Route } from '../../App';
 
 type Modalidade = 'futsal' | 'society';
@@ -30,6 +36,7 @@ interface GroupDetailPageProps {
  */
 export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
   const [activeTab, setActiveTab] = useState<GroupTab>('membros');
+  const sessaoAtiva = getSessaoPartidaAtiva();
 
   const tabs: { id: GroupTab; label: string }[] = [
     { id: 'membros', label: 'Membros' },
@@ -115,13 +122,51 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
             ))}
           </div>
 
+          {/* Banner/CTA: Retomar Partida Pausada (se houver) */}
+          {sessaoAtiva && (
+            <button
+              type="button"
+              onClick={() => navigate('partida', { retomarSessao: true })}
+              className="w-full p-3 rounded-[8px] bg-[#2E7D32] hover:brightness-110 text-left flex items-center justify-between gap-2 transition-all"
+            >
+              <div className="flex flex-col">
+                <span className="text-[#CBFFC2] text-[13px] font-bold">
+                  ▶ Retomar Partida {sessaoAtiva.numeroPartida} (Pausada)
+                </span>
+                <span className="text-white text-[12px]">
+                  {sessaoAtiva.fila[0]?.nome} {sessaoAtiva.gols[0]} x {sessaoAtiva.gols[1]}{' '}
+                  {sessaoAtiva.fila[1]?.nome}
+                </span>
+              </div>
+              <span className="px-2.5 py-1 rounded-[6px] bg-[#001D32] text-[#88D982] text-[12px] font-semibold">
+                Continuar →
+              </span>
+            </button>
+          )}
+
           {/* CTA: Criar Racha */}
           <Button
             fullWidth
             style={{ borderRadius: 8, marginTop: 4 }}
-            onClick={() => navigate('criar-racha', { nome: groupData?.nome ?? 'Meu Grupo' })}
+            onClick={() =>
+              navigate('criar-racha', {
+                nome: groupData?.nome ?? 'Meu Grupo',
+                modalidades: groupData?.modalidades ?? [],
+                fotoCapa: groupData?.fotoCapa ?? null,
+              })
+            }
           >
             + Criar Racha
+          </Button>
+
+          {/* CTA: Sorteio de times → partida */}
+          <Button
+            fullWidth
+            variant="outline"
+            style={{ borderRadius: 8 }}
+            onClick={() => navigate('sorteio')}
+          >
+            Sortear Times
           </Button>
         </div>
 
@@ -199,28 +244,95 @@ function MembrosTab() {
 }
 
 function RankingTab() {
+  const partidas = getHistoricoPartidas();
+  const temEstatisticas =
+    partidas.length > 0 ||
+    mockJogadoresConfirmados.some((j) => (j.gols ?? 0) > 0 || (j.assistencias ?? 0) > 0);
+
+  if (!temEstatisticas) {
+    return (
+      <EmptyState
+        icon={
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+        }
+        message="O ranking será gerado após o primeiro racha realizado."
+      />
+    );
+  }
+
+  const ordenados = [...mockJogadoresConfirmados].sort(
+    (a, b) => b.rating - a.rating || (b.gols ?? 0) - (a.gols ?? 0),
+  );
+
   return (
-    <EmptyState
-      icon={
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
-      }
-      message="O ranking será gerado após o primeiro racha realizado."
-    />
+    <div className="flex flex-col gap-2">
+      {ordenados.map((j, idx) => (
+        <div
+          key={j.id}
+          className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-[8px] bg-[#000F1E] border border-[#40493D]"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-6 text-center text-[#88D982] text-[13px] font-bold">
+              {idx + 1}º
+            </span>
+            <span className="text-[#CEE5FF] text-[14px] font-semibold truncate">
+              {j.nome}
+              {j.goleiro && ' (G)'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-[#9FB7D6] text-[12px]">
+              {j.gols ?? 0}G · {j.assistencias ?? 0}A
+            </span>
+            <span className="px-2 py-0.5 rounded-[10px] bg-[#88D982] text-[#003909] text-[13px] font-bold">
+              {j.rating.toFixed(1)}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
 function HistoricoTab() {
+  const partidas = getHistoricoPartidas();
+
+  if (partidas.length === 0) {
+    return (
+      <EmptyState
+        icon={
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        }
+        message="Nenhum racha realizado ainda. O histórico aparecerá aqui."
+      />
+    );
+  }
+
   return (
-    <EmptyState
-      icon={
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-      }
-      message="Nenhum racha realizado ainda. O histórico aparecerá aqui."
-    />
+    <div className="flex flex-col gap-3">
+      {partidas.map((p) => (
+        <div
+          key={p.id}
+          className="rounded-[8px] bg-[#000F1E] border border-[#40493D] p-3 flex flex-col gap-2"
+        >
+          <div className="flex items-center justify-between text-[12px] text-[#9FB7D6]">
+            <span className="font-semibold text-[#88D982]">Partida {p.numero}</span>
+            <span>Duração: {formatarTempo(p.duracaoSegundos)}</span>
+          </div>
+          <div className="flex items-center justify-between px-3 py-2 rounded-[6px] bg-[#001D32]">
+            <span className="text-[#CEE5FF] text-[14px] font-semibold">{p.nomeTimeEsq}</span>
+            <span className="text-white text-[16px] font-bold">
+              {p.golsEsq} x {p.golsDir}
+            </span>
+            <span className="text-[#CEE5FF] text-[14px] font-semibold">{p.nomeTimeDir}</span>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
