@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { TopBar } from '../../components/layout/TopBar';
 import { BottomNavBar } from '../../components/layout/BottomNavBar';
+import { getCurrentProfile } from '../../mock/userData';
+import { fetchUserProfile } from '../../services/profile';
 import type { Route } from '../../App';
 
 type NavTab = 'home' | 'groups' | 'alerts' | 'profile';
@@ -16,9 +18,25 @@ interface HomePageProps {
  */
 export function HomePage({ navigate }: HomePageProps) {
   const [activeTab, setActiveTab] = useState<NavTab>('home');
+  const [userPhoto, setUserPhoto] = useState<string | null>(() => getCurrentProfile().fotoPerfil);
+
+  useEffect(() => {
+    let active = true;
+    fetchUserProfile()
+      .then(({ photoUrl }) => {
+        if (active && photoUrl) setUserPhoto(photoUrl);
+      })
+      .catch(() => {
+        // Perfil ainda não cadastrado ou API indisponível
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleNavChange = (tab: NavTab) => {
     setActiveTab(tab);
+    if (tab === 'groups') navigate('detalhe-grupo');
     if (tab === 'profile') navigate('perfil');
   };
 
@@ -48,7 +66,11 @@ export function HomePage({ navigate }: HomePageProps) {
         </Button>
       </main>
 
-      <BottomNavBar active={activeTab} onTabChange={handleNavChange} />
+      <BottomNavBar
+        active={activeTab}
+        onTabChange={handleNavChange}
+        userPhoto={userPhoto}
+      />
     </div>
   );
 }

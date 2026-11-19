@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { InputField } from '../../components/ui/InputField';
 import { Button } from '../../components/ui/Button';
+import { getRegrasRacha, setRegrasRacha } from '../../mock/matchData';
 import type { Route } from '../../App';
 
 interface CreateRachaPageProps {
   navigate: (route: Route, state?: unknown) => void;
   /** Dados do grupo pai (passados via routeState) */
-  groupData?: { nome: string };
+  groupData?: { nome: string; modalidades?: ('futsal' | 'society')[]; fotoCapa?: string | null };
 }
 
 type Modalidade = 'futsal' | 'society';
@@ -19,6 +20,8 @@ interface RachaForm {
   maxJogadores: string;
   vagasPorTime: string;
   modalidade: Modalidade | '';
+  tempoPorPartida: string; // em minutos
+  maxGols: string;
   observacoes: string;
 }
 
@@ -42,6 +45,7 @@ const MODALIDADES: { label: string; value: Modalidade }[] = [
  *  - Observações (opcional)
  */
 export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
+  const regrasIniciais = getRegrasRacha();
   const [form, setForm] = useState<RachaForm>({
     titulo: '',
     data: '',
@@ -50,6 +54,8 @@ export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
     maxJogadores: '',
     vagasPorTime: '',
     modalidade: '',
+    tempoPorPartida: String(regrasIniciais.tempoMinutos),
+    maxGols: String(regrasIniciais.maxGols),
     observacoes: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -92,6 +98,18 @@ export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
     else if (!isNaN(max) && vpt >= max)
       e.vagasPorTime = 'Vagas por time deve ser menor que o total';
 
+    const tempo = parseInt(form.tempoPorPartida, 10);
+    if (!form.tempoPorPartida || isNaN(tempo) || tempo < 1)
+      e.tempoPorPartida = 'Mínimo de 1 minuto';
+    else if (tempo > 60)
+      e.tempoPorPartida = 'Máximo de 60 minutos';
+
+    const gols = parseInt(form.maxGols, 10);
+    if (!form.maxGols || isNaN(gols) || gols < 1)
+      e.maxGols = 'Mínimo de 1 gol';
+    else if (gols > 20)
+      e.maxGols = 'Máximo de 20 gols';
+
     if (!form.modalidade)
       e.modalidade = 'Selecione a modalidade';
 
@@ -113,11 +131,19 @@ export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
       maxJogadores: parseInt(form.maxJogadores, 10),
       vagasPorTime: parseInt(form.vagasPorTime, 10),
       modalidade: form.modalidade,
+      tempoPorPartida: parseInt(form.tempoPorPartida, 10),
+      maxGols: parseInt(form.maxGols, 10),
       observacoes: form.observacoes.trim() || null,
     };
 
+    setRegrasRacha({
+      tempoMinutos: rachaData.tempoPorPartida,
+      maxGols: rachaData.maxGols,
+      vagasPorTime: rachaData.vagasPorTime,
+    });
+
     console.log('Racha criado:', rachaData);
-    navigate('detalhe-grupo');
+    navigate('detalhe-grupo', groupData);
   };
 
   /* ── Render ──────────────────────────────────────────────────────────── */
@@ -133,7 +159,7 @@ export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
       >
         <button
           type="button"
-          onClick={() => navigate('detalhe-grupo')}
+          onClick={() => navigate('detalhe-grupo', groupData)}
           className="flex items-center gap-2 text-[#BFCABA] hover:text-white transition-colors text-[14px] font-medium"
           aria-label="Voltar"
         >
@@ -301,6 +327,28 @@ export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
             />
           </div>
 
+          {/* Regras da partida (Tempo e Limite de gols) */}
+          <div className="flex gap-3">
+            <InputField
+              label="Tempo/partida (min)"
+              type="number"
+              placeholder="Ex: 10"
+              value={form.tempoPorPartida}
+              onChange={(e) => setField('tempoPorPartida', e.target.value)}
+              error={errors.tempoPorPartida}
+              className="flex-1"
+            />
+            <InputField
+              label="Máx. gols (vitória)"
+              type="number"
+              placeholder="Ex: 2"
+              value={form.maxGols}
+              onChange={(e) => setField('maxGols', e.target.value)}
+              error={errors.maxGols}
+              className="flex-1"
+            />
+          </div>
+
           {/* Modalidade */}
           <div className="flex flex-col gap-[2px]">
             <span className="text-[#6C7278] font-medium text-[12px] leading-[1.6em] tracking-[-0.02em] font-['Plus_Jakarta_Sans']">
@@ -358,7 +406,7 @@ export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
             </div>
           </div>
 
-          {/* Resumo rápido (vagas por time) */}
+          {/* Resumo rápido (vagas por time e regras) */}
           {form.maxJogadores && form.vagasPorTime && !errors.maxJogadores && !errors.vagasPorTime && (
             <div
               className="flex items-center gap-3 px-4 py-3 rounded-[10px]"
@@ -369,9 +417,16 @@ export function CreateRachaPage({ navigate, groupData }: CreateRachaPageProps) {
                 <line x1="12" y1="8" x2="12" y2="12" />
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <span className="text-[#9FB7D6] text-[12px]">
-                {Math.floor(parseInt(form.maxJogadores) / parseInt(form.vagasPorTime))} time(s) de {form.vagasPorTime} — {form.maxJogadores} jogadores no total
-              </span>
+              <div className="flex flex-col text-[12px] text-[#9FB7D6]">
+                <span>
+                  {Math.floor(parseInt(form.maxJogadores) / parseInt(form.vagasPorTime))} time(s) de {form.vagasPorTime} — {form.maxJogadores} jogadores no total
+                </span>
+                {form.tempoPorPartida && form.maxGols && !errors.tempoPorPartida && !errors.maxGols && (
+                  <span className="text-[#88D982]">
+                    Partidas de {form.tempoPorPartida} min ou até {form.maxGols} gol(s)
+                  </span>
+                )}
+              </div>
             </div>
           )}
 

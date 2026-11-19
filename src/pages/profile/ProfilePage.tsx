@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TopBar } from '../../components/layout/TopBar';
 import { BottomNavBar } from '../../components/layout/BottomNavBar';
 import {
   getCurrentProfile,
-  mockUserStats,
+  getCurrentStats,
   mockUserGroups,
+  resetProfileStore,
   type UserGroup,
 } from '../../mock/userData';
 import { logout } from '../../services/auth';
+import { fetchUserProfile } from '../../services/profile';
 import type { Route } from '../../App';
 
 type NavTab = 'home' | 'groups' | 'alerts' | 'profile';
@@ -30,16 +32,36 @@ interface ProfilePageProps {
 export function ProfilePage({ navigate }: ProfilePageProps) {
   const [activeNav, setActiveNav] = useState<NavTab>('profile');
   const [loggingOut, setLoggingOut] = useState(false);
+  const [profile, setProfile] = useState(() => getCurrentProfile());
+  const [stats, setStats] = useState(() => getCurrentStats());
+
+  useEffect(() => {
+    let active = true;
+    fetchUserProfile()
+      .then(() => {
+        if (!active) return;
+        setProfile(getCurrentProfile());
+        setStats(getCurrentStats());
+      })
+      .catch((err) => {
+        console.error('Erro ao carregar perfil da API:', err);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleNavChange = (tab: NavTab) => {
     setActiveNav(tab);
     if (tab === 'home') navigate('home');
+    if (tab === 'groups') navigate('detalhe-grupo');
   };
 
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
       await logout();
+      resetProfileStore();
       navigate('login');
     } catch {
       // Falha ao encerrar a sessão: mantém o usuário na tela.
@@ -47,9 +69,6 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
     }
   };
 
-  // Lê o perfil do store a cada montagem — reflete edições salvas em EditProfilePage
-  const profile = getCurrentProfile();
-  const stats = mockUserStats;
   const groups = mockUserGroups;
 
   return (
@@ -89,7 +108,7 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
               {profile.fotoPerfil ? (
                 <img
                   src={profile.fotoPerfil}
-                  alt={profile.nome}
+                  alt={profile.usuario || profile.nome}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -100,10 +119,10 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
               )}
             </div>
 
-            {/* Nome + posição + pé */}
-            <div className="flex flex-col gap-1">
-              <h1 className="text-white font-semibold text-[20px] leading-tight">
-                {profile.nome}
+            {/* Nome de usuário + posição + pé */}
+            <div className="flex flex-col gap-1 min-w-0 pr-9">
+              <h1 className="text-white font-semibold text-[20px] leading-tight truncate">
+                {profile.usuario || profile.nome}
               </h1>
               {/* Posição e pé dominante na mesma linha */}
               <div className="flex items-center gap-6">
@@ -212,7 +231,17 @@ export function ProfilePage({ navigate }: ProfilePageProps) {
           {/* Lista de grupos */}
           <div className="flex flex-col gap-3">
             {groups.map((group) => (
-              <GroupCard key={group.id} group={group} />
+              <GroupCard
+                key={group.id}
+                group={group}
+                onClick={() =>
+                  navigate('detalhe-grupo', {
+                    nome: group.nome,
+                    modalidades: group.modalidades,
+                    fotoCapa: group.fotoCapa,
+                  })
+                }
+              />
             ))}
           </div>
         </div>
@@ -274,14 +303,16 @@ function getInitials(nome: string): string {
 }
 
 /** Card de grupo com iniciais, nome, membros e próxima partida */
-function GroupCard({ group }: { group: UserGroup }) {
+function GroupCard({ group, onClick }: { group: UserGroup; onClick?: () => void }) {
   const initials = getInitials(group.nome);
   // Alterna cor de fundo das iniciais entre grupos
   const iconBg = group.isAdmin ? '#1A3A5C' : '#2D4A2D';
 
   return (
-    <div
-      className="w-full flex items-center gap-3 py-3 px-4 rounded-[8px]"
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-3 py-3 px-4 rounded-[8px] text-left hover:opacity-90 transition-opacity"
       style={{ backgroundColor: '#000F1E', border: '1px solid #40493D' }}
     >
       {/* Quadrado de iniciais */}
@@ -325,6 +356,6 @@ function GroupCard({ group }: { group: UserGroup }) {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6C7278" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="9 18 15 12 9 6" />
       </svg>
-    </div>
+    </button>
   );
 }
