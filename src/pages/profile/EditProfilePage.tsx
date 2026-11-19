@@ -1,15 +1,21 @@
-import { useState, useRef, type FormEvent } from 'react';
+import { useEffect, useState, useRef, type FormEvent } from 'react';
 import { InputField } from '../../components/ui/InputField';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { RadioGroup } from '../../components/ui/RadioGroup';
 import { Button } from '../../components/ui/Button';
 import {
   getCurrentProfile,
-  updateProfile,
   type Posicao,
   type PeDominante,
   type Modalidade,
 } from '../../mock/userData';
+import {
+  ALLOWED_IMAGE_TYPES,
+  ProfileServiceError,
+  fetchUserProfile,
+  saveUserProfile,
+  validateProfileImage,
+} from '../../services/profile';
 import type { Route } from '../../App';
 
 interface EditProfilePageProps {
@@ -18,6 +24,7 @@ interface EditProfilePageProps {
 
 interface EditForm {
   nome: string;
+  telefone: string;
   fotoPerfil: string | null;
   posicaoPrincipal: Posicao | '';
   posicaoSecundaria: Posicao | '';
@@ -60,19 +67,13 @@ const OPCOES_MODALIDADE: { label: string; value: Modalidade }[] = [
  * Tela de Edição de Perfil — RachaoApp
  * (RF-02 — Gerenciamento do Perfil de Atleta)
  *
- * Campos editáveis:
- *  - Foto de perfil (circular, clicável)
- *  - Nome completo
- *  - Posição principal (Dropdown — depende da modalidade)
- *  - Posição secundária (Dropdown — opcional)
- *  - Pé dominante (RadioGroup)
- *  - Modalidade preferida (RadioGroup)
+ * Salva dados no DynamoDB e faz upload da imagem para o S3 via PUT /profile + Presigned URL.
  */
 export function EditProfilePage({ navigate }: EditProfilePageProps) {
-  // Inicializa o form com os dados atuais do store
   const currentProfile = getCurrentProfile();
   const [form, setForm] = useState<EditForm>({
     nome: currentProfile.nome,
+    telefone: currentProfile.telefone ?? '',
     fotoPerfil: currentProfile.fotoPerfil,
     posicaoPrincipal: currentProfile.posicaoPrincipal,
     posicaoSecundaria: currentProfile.posicaoSecundaria ?? '',
@@ -80,7 +81,44 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
     modalidadePreferida: currentProfile.modalidadePreferida,
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState('');
+  const [serverError, setServerError] = useState('');
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sincroniza o formulário com os dados mais recentes da API ao abrir a tela
+  useEffect(() => {
+    let active = true;
+    fetchUserProfile()
+      .then(({ profile }) => {
+        if (!active) return;
+        setForm((prev) => ({
+          ...prev,
+          nome: profile.nome || prev.nome,
+          telefone: profile.telefone ?? prev.telefone,
+          fotoPerfil: selectedFile ? prev.fotoPerfil : profile.fotoPerfil,
+          posicaoPrincipal: profile.posicaoPrincipal || prev.posicaoPrincipal,
+          posicaoSecundaria: profile.posicaoSecundaria ?? '',
+          peDominante: profile.peDominante || prev.peDominante,
+          modalidadePreferida: profile.modalidadePreferida || prev.modalidadePreferida,
+        }));
+      })
+      .catch(() => {
+        // Mantém os dados em cache se a leitura inicial falhar
+      });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    };
+  }, [previewObjectUrl]);
 
   /* ── Foto de perfil ──────────────────────────────────────────────────── */
   const handlePhotoClick = () => fileInputRef.current?.click();
@@ -88,10 +126,24 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) =>
-      setForm((prev) => ({ ...prev, fotoPerfil: ev.target?.result as string }));
-    reader.readAsDataURL(file);
+
+    const validationError = validateProfileImage(file);
+    if (validationError) {
+      setPhotoError(validationError);
+      e.target.value = '';
+      return;
+    }
+
+    setPhotoError('');
+    setServerError('');
+    setSelectedFile(file);
+
+    const localUrl = URL.createObjectURL(file);
+    setPreviewObjectUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return localUrl;
+    });
+    setForm((prev) => ({ ...prev, fotoPerfil: localUrl }));
   };
 
   /* ── Posições disponíveis dependem da modalidade ─────────────────────── */
@@ -111,22 +163,39 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
   };
 
   /* ── Submit ──────────────────────────────────────────────────────────── */
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setServerError('');
+
     const errs = validate();
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
 
-    // Persiste no store em memória — será substituído por PATCH /perfil (API)
-    updateProfile({
-      nome: form.nome.trim(),
-      fotoPerfil: form.fotoPerfil,
-      posicaoPrincipal: form.posicaoPrincipal as Posicao,
-      posicaoSecundaria: form.posicaoSecundaria ? form.posicaoSecundaria as Posicao : null,
-      peDominante: form.peDominante as PeDominante,
-      modalidadePreferida: form.modalidadePreferida,
-    });
-
-    navigate('perfil');
+    setSaving(true);
+    try {
+      await saveUserProfile(
+        {
+          nome: form.nome.trim(),
+          telefone: form.telefone.trim(),
+          posicaoPrincipal: form.posicaoPrincipal,
+          posicaoSecundaria: form.posicaoSecundaria,
+          peDominante: form.peDominante,
+          modalidadePreferida: form.modalidadePreferida,
+        },
+        selectedFile,
+      );
+      navigate('perfil');
+    } catch (err) {
+      setServerError(
+        err instanceof ProfileServiceError
+          ? err.message
+          : 'Não foi possível salvar as alterações. Tente novamente.',
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -146,7 +215,8 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
         <button
           type="button"
           onClick={() => navigate('perfil')}
-          className="flex items-center gap-2 text-[#BFCABA] hover:text-white transition-colors text-[14px] font-medium"
+          disabled={saving}
+          className="flex items-center gap-2 text-[#BFCABA] hover:text-white transition-colors text-[14px] font-medium disabled:opacity-50"
           aria-label="Voltar"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -174,7 +244,8 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
             <button
               type="button"
               onClick={handlePhotoClick}
-              className="relative rounded-full overflow-hidden flex items-center justify-center hover:opacity-80 transition-opacity"
+              disabled={saving}
+              className="relative rounded-full overflow-hidden flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-60"
               style={{ width: 100, height: 100, backgroundColor: '#1A3A5C' }}
               aria-label="Alterar foto de perfil"
             >
@@ -203,12 +274,20 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
               </div>
             </button>
 
-            <span className="text-[#6C7278] text-[12px]">Alterar foto</span>
+            <span className="text-[#9FB7D6] text-[12px]">
+              Alterar foto (JPG, PNG ou WebP · máx. 2 MB)
+            </span>
+
+            {photoError && (
+              <span className="text-red-400 text-[12px] font-medium text-center">
+                {photoError}
+              </span>
+            )}
 
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept={ALLOWED_IMAGE_TYPES.join(',')}
               className="hidden"
               onChange={handleFileChange}
             />
@@ -230,6 +309,18 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
               }}
               error={errors.nome}
               maxLength={60}
+            />
+          </div>
+
+          {/* Telefone */}
+          <div className="w-full" style={{ maxWidth: 327 }}>
+            <InputField
+              label="Telefone (opcional)"
+              type="tel"
+              placeholder="(84) 99999-9999"
+              value={form.telefone}
+              onChange={(e) => setForm((prev) => ({ ...prev, telefone: e.target.value }))}
+              maxLength={20}
             />
           </div>
 
@@ -295,10 +386,13 @@ export function EditProfilePage({ navigate }: EditProfilePageProps) {
             />
           </div>
 
-          {/* Botão salvar */}
-          <div className="w-full flex justify-center mt-2" style={{ maxWidth: 327 }}>
-            <Button type="submit" style={{ width: 180, borderRadius: 8 }}>
-              Salvar alterações
+          {/* Erro do servidor + Botão salvar */}
+          <div className="w-full flex flex-col items-center gap-3 mt-2" style={{ maxWidth: 327 }}>
+            {serverError && (
+              <p className="text-red-400 text-[13px] font-medium text-center">{serverError}</p>
+            )}
+            <Button type="submit" disabled={saving} style={{ width: 196, borderRadius: 8 }}>
+              {saving ? 'Salvando...' : 'Salvar alterações'}
             </Button>
           </div>
         </form>

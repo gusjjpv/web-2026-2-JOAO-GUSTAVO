@@ -8,6 +8,7 @@ import {
   getSessaoPartidaAtiva,
   mockJogadoresConfirmados,
 } from '../../mock/matchData';
+import { getCurrentProfile } from '../../mock/userData';
 import type { Route } from '../../App';
 
 type Modalidade = 'futsal' | 'society';
@@ -200,7 +201,11 @@ export function GroupDetailPage({ navigate, groupData }: GroupDetailPageProps) {
         </div>
       </main>
 
-      <BottomNavBar active="groups" onTabChange={handleNavChange} />
+      <BottomNavBar
+        active="groups"
+        onTabChange={handleNavChange}
+        userPhoto={getCurrentProfile().fotoPerfil}
+      />
     </div>
   );
 }

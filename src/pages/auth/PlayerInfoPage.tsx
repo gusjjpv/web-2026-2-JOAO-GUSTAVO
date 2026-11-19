@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Dropdown } from '../../components/ui/Dropdown';
+import { ProfileServiceError, saveUserProfile } from '../../services/profile';
 import logoImg from '../../assets/Logo.svg';
 import type { Route } from '../../App';
 
@@ -9,21 +10,22 @@ interface PlayerInfoPageProps {
 }
 
 const POSICOES = [
-  { label: 'Fixo', value: 'fixo' },
-  { label: 'Ala', value: 'ala' },
-  { label: 'Pivo', value: 'pivo' },
-  { label: 'Goleiro', value: 'goleiro' },
+  { label: 'Goleiro', value: 'Goleiro' },
+  { label: 'Fixo', value: 'Fixo' },
+  { label: 'Ala', value: 'Ala' },
+  { label: 'Pivô', value: 'Pivô' },
+  { label: 'Versátil', value: 'Versátil' },
 ];
 
 const PES = [
-  { label: 'Destro', value: 'destro' },
-  { label: 'Canhoto', value: 'canhoto' },
-  { label: 'Ambidestro', value: 'ambidestro' },
+  { label: 'Destro', value: 'Destro' },
+  { label: 'Canhoto', value: 'Canhoto' },
+  { label: 'Ambidestro', value: 'Ambidestro' },
 ];
 
 const MODALIDADES = [
   { label: 'Futsal', value: 'futsal' },
-  { label: 'Futset', value: 'futset' },
+  { label: 'Society', value: 'society' },
 ];
 
 /**
@@ -31,7 +33,7 @@ const MODALIDADES = [
  * Figma node: 20-562
  *
  * Dropdowns: posição principal, secundária, pé dominante, modalidade preferida
- * Botão: "Continuar →" → navega para upload-photo
+ * Botão: "Continuar →" → salva no DynamoDB (PUT /profile) e navega para upload-photo
  */
 export function PlayerInfoPage({ navigate }: PlayerInfoPageProps) {
   const [form, setForm] = useState({
@@ -40,14 +42,35 @@ export function PlayerInfoPage({ navigate }: PlayerInfoPageProps) {
     peDominante: '',
     modalidade: '',
   });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleChange = (field: keyof typeof form) => (value: string) =>
+  const handleChange = (field: keyof typeof form) => (value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    setError('');
+  };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // TODO: integrar com serviço de cadastro
-    navigate('upload-photo');
+    setError('');
+    setSaving(true);
+    try {
+      await saveUserProfile({
+        posicaoPrincipal: form.posicaoPrincipal,
+        posicaoSecundaria: form.posicaoSecundaria,
+        peDominante: form.peDominante,
+        modalidadePreferida: form.modalidade,
+      });
+      navigate('upload-photo');
+    } catch (err) {
+      setError(
+        err instanceof ProfileServiceError
+          ? err.message
+          : 'Não foi possível salvar seus dados. Tente novamente.',
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -111,9 +134,13 @@ export function PlayerInfoPage({ navigate }: PlayerInfoPageProps) {
           onChange={handleChange('modalidade')}
         />
 
+        {error && (
+          <p className="text-red-400 text-[13px] font-medium text-center mt-2">{error}</p>
+        )}
+
         <div className="flex justify-center mt-6">
-          <Button type="submit" style={{ width: 143, borderRadius: 8 }}>
-            Continuar →
+          <Button type="submit" disabled={saving} style={{ width: 156, borderRadius: 8 }}>
+            {saving ? 'Salvando...' : 'Continuar →'}
           </Button>
         </div>
       </form>
